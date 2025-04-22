@@ -1,0 +1,151 @@
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <title>Drone Sürü Kontrol Paneli</title>
+    <link rel="stylesheet" href="styles.css">
+    <!-- Cesium CSS -->
+    <link href="https://cesium.com/downloads/cesiumjs/releases/1.95/Build/Cesium/Widgets/widgets.css" rel="stylesheet">
+</head>
+<body>
+    <div class="ground-control-panel">
+        <div class="mission-planning-panel">
+            <h2>Görev Planlama</h2>
+            <div class="mission-details">
+                <label>Görev Adı:</label>
+                <input type="text" id="mission-name">
+                
+                <label>Görev Tipi:</label>
+                <select id="area-select">
+                    <option value="target">Hedefe Ulaşma</option>
+                    <option value="area">Alan Tarama</option>
+                </select>
+
+                <label>Formasyon:</label>
+                <div class="formation-selector">
+                    <button class="formation-btn active">Üçgen</button>
+                    <button class="formation-btn">Hat</button>
+                    <button class="formation-btn">Izgara</button>
+                </div>
+
+                <label>Görev Parametreleri:</label>
+                <div class="param-sliders">
+                    <div class="param-item">
+                        <label for="yukseklik-slider">Yükseklik (<span id="yukseklikValue">100</span> m)</label>
+                        <input type="range" id="yukseklik-slider" min="10" max="500" value="100">
+                    </div>
+                    <div class="param-item">
+                        <label>Görev Noktaları</label>
+                        <div class="position-inputs" id="position-inputs">
+                            <input type="text" id="position-x1" placeholder="X1 Pozisyonu">
+                            <input type="text" id="position-y1" placeholder="Y1 Pozisyonu">
+                            <input type="text" id="position-x2" placeholder="X2 Pozisyonu" style="display:none;">
+                            <input type="text" id="position-y2" placeholder="Y2 Pozisyonu" style="display:none;">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mission-launch-controls">
+                    <button class="control-btn launch-btn">Sürüyü Başlat</button>
+                    <button class="control-btn emergency-btn">Sürüyü Acil Durdur</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="map-display-panel">
+            <div class="panel-tabs">
+                <button class="tab active" data-tab="map">Harita</button>
+                <button class="tab" data-tab="route">Formasyon Görünümü</button>
+                <button class="tab" data-tab="terminal">Terminal Çıktısı</button>
+            </div>
+            <div class="panel-content">
+                <div id="map-container" class="tab-content active" data-tab="map">
+                    <!-- Cesium map will be rendered here -->
+                    <div id="cesiumContainer"></div>
+                </div>
+                <div class="tab-content" data-tab="route">
+                    <h3>Formasyon Görünümü</h3>
+                    <div class="formation-view-container">
+                        <svg id="formation-svg" viewBox="0 0 200 200"></svg>
+                    </div>
+                </div>
+                <div class="tab-content" data-tab="terminal">
+                    <div class="terminal-output">
+                        <div class="terminal-header">
+                            <span>Drone Sürü Terminali</span>
+                        </div>
+                        <div id="terminal-log" class="terminal-log">
+                            <p class="log-entry">Sistem başlatılıyor...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="drone-controls-panel">
+            <div class="panel-tabs">
+                <button class="tab active" data-tab="drone1">Drone 1</button>
+                <button class="tab" data-tab="drone2">Drone 2</button>
+                <button class="tab" data-tab="drone3">Drone 3</button>
+            </div>
+            <div class="panel-content">
+                <div class="drone-details tab-content active" data-tab="drone1">
+                    <h3>Drone 1 Detayları</h3>
+                    <div class="drone-status-card">
+                        <div class="drone-icon">🚁</div>
+                        <span>Drone 1</span>
+                        <div class="status-indicators">
+                            <div class="battery">85%</div>
+                            <div class="signal">Güçlü</div>
+                        </div>
+                    </div>
+                    <div class="drone-detailed-info">
+                        <p>Konum: 42.5° N, 73.2° W</p>
+                        <p>Yükseklik: 120m</p>
+                        <p>Hız: 15 m/s</p>
+                    </div>
+                </div>
+                <div class="drone-details tab-content" data-tab="drone2">
+                    <h3>Drone 2 Detayları</h3>
+                    <div class="drone-status-card">
+                        <div class="drone-icon">🚁</div>
+                        <span>Drone 2</span>
+                        <div class="status-indicators">
+                            <div class="battery">75%</div>
+                            <div class="signal">Orta</div>
+                        </div>
+                    </div>
+                    <div class="drone-detailed-info">
+                        <p>Konum: 42.6° N, 73.3° W</p>
+                        <p>Yükseklik: 110m</p>
+                        <p>Hız: 12 m/s</p>
+                    </div>
+                </div>
+                <div class="drone-details tab-content" data-tab="drone3">
+                    <h3>Drone 3 Detayları</h3>
+                    <div class="drone-status-card">
+                        <div class="drone-icon">🚁</div>
+                        <span>Drone 3</span>
+                        <div class="status-indicators">
+                            <div class="battery">65%</div>
+                            <div class="signal">Zayıf</div>
+                        </div>
+                    </div>
+                    <div class="drone-detailed-info">
+                        <p>Konum: 42.7° N, 73.4° W</p>
+                        <p>Yükseklik: 100m</p>
+                        <p>Hız: 10 m/s</p>
+                    </div>
+                </div>
+            </div>
+            <div class="swarm-controls">
+                <button class="control-btn return-btn">Üsse Dön</button>
+                <button class="control-btn emergency-btn">Acil Durdur</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Cesium JS -->
+    <script src="https://cesium.com/downloads/cesiumjs/releases/1.95/Build/Cesium/Cesium.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
