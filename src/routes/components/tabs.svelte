@@ -14,7 +14,7 @@
 <div class="panel-content">
     {#each items as item}
         {#if activeTabValue == item.value}
-            <svelte:component this={item.component}/>
+            <svelte:component this={item.component} {...item.props}/>
         {/if}
     {/each}
 </div>

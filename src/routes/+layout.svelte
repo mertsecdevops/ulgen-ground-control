@@ -41,6 +41,7 @@
 			<MissionPlanner/>
 		</section>
 		<section id="monitoring-panel" class="middle-content">
+            <h2>Gözlem Panelleri</h2>
             {#if !loading}
 				<Tabs items={tabPages} />
 			{:else}
