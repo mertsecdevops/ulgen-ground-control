@@ -32,6 +32,11 @@ body {
     padding: 5px; 
 }
 
+.app {
+    width: 100%;
+    height: 100%;
+}
+
 .ground-control-panel {
     display: grid;
     grid-template-columns: 280px 1fr 280px; 
@@ -43,7 +48,6 @@ body {
     overflow: hidden; 
 }
 
-.mission-planning-panel,
 .drone-controls-panel,
 .middle-content {
     background-color: var(--bg-primary);
@@ -63,19 +67,6 @@ h2 {
     font-size: 14px; 
 }
 
-.mission-details {
-    padding: 5px; 
-}
-
-.mission-details label {
-    display: block;
-    font-weight: bold;
-    text-transform: uppercase;
-    margin-top: 5px;
-    font-size: 11px;
-    padding: 3px; 
-}
-
 button, input, select {
     width: 100%;
     border: 1px solid var(--border-color);
@@ -85,22 +76,6 @@ button, input, select {
     margin-top: 3px;
     font-family: 'Space Mono', monospace;
     font-size: 12px; 
-}
-
-.formation-selector {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 3px;
-    margin: 5px 0;
-    padding: 3px; 
-}
-
-.param-sliders {
-    padding: 3px; 
-}
-
-.param-sliders div {
-    padding: 3px; 
 }
 
 .swarm-controls {
@@ -298,11 +273,6 @@ button:hover {
 
 button:active {
     transform: scale(0.98);
-}
-
-/* Added styles for param items and position inputs */
-.param-item {
-    margin-bottom: 5px;
 }
 
 .position-inputs {
