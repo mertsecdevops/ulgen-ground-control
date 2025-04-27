@@ -11,25 +11,19 @@
 	let loading = true;
 	
 	onMount(async () => {
-        const promises = [];
-        // Bir dizi promise
-        for (const path in monitoringTabs) {
-            promises.push(
-                monitoringTabs[path]().then((tab) => {
-                    const Component = tab.default;
-                    const fileName = path.split('/').pop().replace('.svelte', '');
-                    // Sekme adı
-                    const displayName = fileName.charAt(0).toUpperCase() + fileName.slice(1);
-                    return { 
-                        label: displayName,
-                        value: Object.keys(monitoringTabs).indexOf(path) + 1,
-                        component: Component,
-                        path
-                    };
-                })
-            );
-        }
-        // Tüm sekmelerin yüklenmesini bekle
+        const promises = Object.entries(monitoringTabs).map(([path, loadTab], index) => 
+            loadTab().then((tab) => {
+                const Component = tab.default;
+                const fileName = path.split('/').pop().replace('.svelte', '');
+                const displayName = fileName.charAt(0).toUpperCase() + fileName.slice(1);
+                return { 
+                    label: displayName,
+                    value: index + 1,
+                    component: Component,
+                    path
+                };
+            })
+        );
         tabPages = await Promise.all(promises);
         loading = false;
     });

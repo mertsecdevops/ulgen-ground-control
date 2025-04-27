@@ -89,10 +89,6 @@
         padding: 3px; 
     }
 
-    .param-sliders div {
-        padding: 3px; 
-    }
-
     .param-item {
         margin-bottom: 5px;
     }
