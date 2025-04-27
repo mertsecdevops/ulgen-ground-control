@@ -180,7 +180,7 @@ button, input, select {
 /* Tab System Styles */
 .panel-tabs {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr 1fr;
+    grid-auto-flow: column;
     gap: 3px;
     margin-bottom: 5px;
 }

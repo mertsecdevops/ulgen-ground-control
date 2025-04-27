@@ -53,8 +53,10 @@
         </div>
 
         <div class="mission-launch-controls">
-            <button class="control-btn launch-btn">Sürüyü Başlat</button>
-            <button class="control-btn emergency-btn">Sürüyü Acil Durdur</button>
+            <h4>Sürü Kontrolleri</h4>
+            <button class="control-btn launch-btn">Başlat</button>
+            <button class="control-btn return-btn">Üsse Döndür</button>
+            <button class="control-btn emergency-btn">Acil Durdur</button>
         </div>
     </div>
 </div>
@@ -64,10 +66,6 @@
         border: 1px solid var(--border-color);  
         padding: 5px; 
         border-radius: 4px;  
-    }
-
-    .mission-details {
-        padding: 5px; 
     }
 
     .mission-details label {
@@ -81,7 +79,7 @@
 
     .formation-selector {
         display: grid;
-        grid-template-columns: 1fr 1fr 1fr;
+        grid-template-columns: 1fr 1fr 1fr 1fr;
         gap: 3px;
         margin: 5px 0;
         padding: 3px; 

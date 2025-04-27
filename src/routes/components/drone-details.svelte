@@ -14,6 +14,7 @@
     <p>⏩ Hız: {drone.speed} m/s</p>
 </div>
 <div class="drone-controls">
+    <h4>Drone Kontrolleri</h4>
     <button class="control-btn return-btn">Üsse Dön</button>
     <button class="control-btn emergency-btn">Acil Durdur</button>
 </div>
