@@ -6,6 +6,8 @@
     --border-color: #00000010;  
     --accent-color: #ff0000;
     --secondary-color: #0000ff;
+    --third-color: #00ff00;
+    --fourth-color: #e96900;
     --standard-padding: 5px; 
 }
 
@@ -101,8 +103,8 @@ button, input, select {
     color: var(--bg-primary);
 }
 
-.return-btn { 
-    background-color: var(--secondary-color); 
+.return-btn {
+    background-color: var(--fourth-color); 
     color: var(--bg-primary);
 }
 
@@ -178,7 +180,7 @@ button, input, select {
 /* Tab System Styles */
 .panel-tabs {
     display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-columns: 1fr 1fr 1fr 1fr;
     gap: 3px;
     margin-bottom: 5px;
 }
