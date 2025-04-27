@@ -1,4 +1,4 @@
-<script>
+<script context="module">
     export const name = 'Haritalar';
     export const priority = 1;
 </script>

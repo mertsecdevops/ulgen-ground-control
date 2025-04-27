@@ -17,14 +17,15 @@
                 const fileName = path.split('/').pop().replace('.svelte', '');
                 const displayName = fileName.charAt(0).toUpperCase() + fileName.slice(1);
                 return { 
-                    label: displayName,
-                    value: index + 1,
+                    label: tab.name,
+                    value: tab.priority,
                     component: Component,
                     path
                 };
             })
         );
         tabPages = await Promise.all(promises);
+        tabPages.sort((a, b) => a.value - b.value);
         loading = false;
     });
 </script>

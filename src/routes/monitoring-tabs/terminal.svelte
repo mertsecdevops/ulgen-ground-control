@@ -1,4 +1,4 @@
-<script>
+<script context="module">
     export const name = 'Terminal';
     export const priority = 3;
 </script>

@@ -1,4 +1,4 @@
-<script>
+<script context="module">
     export const name = 'Kamera';
     export const priority = 4;
 </script>

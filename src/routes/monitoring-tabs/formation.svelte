@@ -1,4 +1,4 @@
-<script>
+<script context="module">
     export const name = 'Formasyon';
     export const priority = 2;
 </script>
