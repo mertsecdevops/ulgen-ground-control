@@ -1,6 +1,6 @@
 <script context="module">
     export const name = 'Kamera';
-    export const priority = 4;
+    export const priority = 3;
 </script>
 <div>
     Kamera
