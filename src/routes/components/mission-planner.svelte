@@ -6,11 +6,37 @@
 
     let activeFormation = "v"; // Varsayılan formasyon
     const formations = [
-        { name: "V", value: "v", positions: [] },
-        { name: "Çizgi", value: "cizgi", positions: [] },
-        { name: "Ok Başı", value: "ok", positions: [] },
-        { name: "Serbest", value: "serbest", positions: [] }
-    ]
+        { name: "V", value: "v", positions: 
+            [
+                
+                { x: 100, y: 50, number: 1 },
+                { x: 75, y: 100, number: 2 },
+                { x: 125, y: 100, number: 3 }
+            ] 
+        },
+        { name: "Çizgi", value: "cizgi", positions: 
+            [
+                
+                { x: 50, y: 100, number: 1 },
+                { x: 100, y: 100, number: 2 },
+                { x: 150, y: 100, number: 3 }
+            ] 
+        },
+        { name: "Ok Başı", value: "ok", positions: 
+            [
+                
+                { x: 75, y: 75, number: 1 },
+                { x: 125, y: 75, number: 2 },
+                { x: 75, y: 125, number: 3 },
+                { x: 125, y: 125, number: 4 }
+            ] 
+        },
+        { name: "Serbest", value: "serbest", positions: 
+            [
+                
+            ] 
+        }
+    ];
     const handleClick = (formation) => (activeFormation = formation);
 
 </script>
