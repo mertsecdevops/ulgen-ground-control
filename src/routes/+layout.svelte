@@ -17,6 +17,7 @@
                 const fileName = path.split('/').pop().replace('.svelte', '');
                 const displayName = fileName.charAt(0).toUpperCase() + fileName.slice(1);
                 return { 
+					isVisible: tab.isVisible,
                     label: tab.name,
                     value: tab.priority,
                     component: Component,

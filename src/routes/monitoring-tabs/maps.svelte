@@ -1,6 +1,7 @@
 <script context="module">
     export const name = 'Haritalar';
     export const priority = 1;
+    export const isVisible = true;
 </script>
 <script>
     import { onMount } from 'svelte';

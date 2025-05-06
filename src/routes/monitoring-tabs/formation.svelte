@@ -1,6 +1,7 @@
 <script context="module">
     export const name = 'Formasyon';
     export const priority = 2;
+    export const isVisible = false;
 </script>
 <script>
     //! SANIRIM KALDIRACAĞIM
