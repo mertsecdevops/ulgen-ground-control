@@ -4,6 +4,7 @@
     // Asıl projede dinamik olarak veriler güncellenecek.
     let droneTabs = [
         {
+            isVisible: true,
             label: "Drone 1",
             value: 1,
             component: DroneDetails,
@@ -19,6 +20,7 @@
             },
         },
         {
+            isVisible: true,
             label: "Drone 2",
             value: 2,
             component: DroneDetails,
@@ -34,6 +36,7 @@
             },
         },
         {
+            isVisible: true,
             label: "Drone 3",
             value: 3,
             component: DroneDetails,

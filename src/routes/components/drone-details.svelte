@@ -1,5 +1,6 @@
 <script>
     export let drone = {};
+    export const isVisible = true;
 </script>
 <div class="drone-status-card">
     <span>{drone.name}</span>
