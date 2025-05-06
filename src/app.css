@@ -1,0 +1,291 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;700&family=Space+Mono:wght@400;700&display=swap');
+
+:root {
+    --bg-primary: #f4f4f4;
+    --text-color: #000;
+    --border-color: #00000010;  
+    --accent-color: #ff0000;
+    --secondary-color: #0000ff;
+    --third-color: #00ff00;
+    --fourth-color: #e96900;
+    --standard-padding: 5px; 
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    border: 1px solid transparent; 
+    border-radius: 4px;  
+}
+
+body {
+    font-family: 'Space Mono', monospace;
+    background-color: var(--bg-primary);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden; 
+    color: var(--text-color);
+    line-height: 1.6;
+    font-size: 13px; 
+    padding: 5px; 
+}
+
+h2 {
+    margin-bottom: 0 !important;
+}
+
+.app {
+    width: 100%;
+    height: 100%;
+}
+
+.ground-control-panel {
+    display: grid;
+    grid-template-columns: 280px 1fr 280px; 
+    width: 100%;
+    height: 100%;
+    max-height: calc(100vh - 10px); 
+    gap: 5px; 
+    padding: 5px; 
+    overflow: hidden; 
+}
+
+.drone-controls-panel,
+.middle-content {
+    background-color: var(--bg-primary);
+    border: 1px solid var(--border-color);  
+    padding: 5px; 
+    border-radius: 4px;  
+}
+
+h2 {
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px; 
+    margin-bottom: 10px;
+    text-align: center;
+    padding: 5px; 
+    font-size: 14px; 
+}
+
+button, input, select {
+    width: 100%;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;  
+    background: transparent;
+    padding: 8px 3px;  
+    margin-top: 3px;
+    font-family: 'Space Mono', monospace;
+    font-size: 12px; 
+}
+
+.swarm-controls {
+    display: grid;
+    gap: 5px;
+    margin-top: 10px;
+    padding: 3px; 
+}
+
+.control-btn {
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 3px; 
+}
+
+.launch-btn { 
+    background-color: var(--secondary-color); 
+    color: var(--bg-primary);
+}
+
+.return-btn {
+    background-color: var(--fourth-color); 
+    color: var(--bg-primary);
+}
+
+.emergency-btn { 
+    background-color: var(--accent-color); 
+    color: var(--bg-primary);
+}
+
+#map-container {
+    border: 1px solid var(--border-color);
+    width: 100%;
+    height: 100%;
+    min-height: 0; 
+    background-color: #fff;
+    padding: 3px; 
+    overflow: hidden; 
+}
+
+#cesiumContainer {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    overflow: hidden; 
+}
+
+.middle-content {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; 
+}
+
+.middle-content .panel-content {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.middle-content .tab-content {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.middle-content .tab-content[data-tab="map"] {
+    height: 100%;
+    overflow: hidden;
+}
+
+.drone-status-grid {
+    display: grid;
+    gap: 5px;
+    padding: 3px; 
+}
+
+.drone-status-card {
+    border: 1px solid var(--border-color);
+    border-radius: 4px;  
+    padding: 3px; 
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    gap: 5px;
+}
+
+.drone-icon, .status-indicators {
+    padding: 3px; 
+}
+
+.battery, .signal {
+    padding: calc(5px / 2);
+}
+
+/* Tab System Styles */
+.panel-tabs {
+    display: grid;
+    grid-auto-flow: column;
+    gap: 3px;
+    margin-bottom: 5px;
+}
+
+.panel-tabs .tab {
+    background-color: transparent;
+    border: 1px solid var(--border-color);
+    border-radius: 3px;
+    padding: 3px;
+    text-transform: uppercase;
+    font-weight: bold;
+    letter-spacing: 1px;
+    transition: all 0.2s;
+}
+
+.panel-tabs .tab.active {
+    background-color: var(--text-color);
+    color: var(--bg-primary);
+}
+
+.panel-content .tab-content {
+    display: none;
+}
+
+.panel-content .tab-content.active {
+    display: block;
+}
+
+.mission-launch-controls {
+    margin-top: 10px;
+    display: grid;
+}
+
+/* Modify swarm controls styles */
+.drone-controls-panel .swarm-controls {
+    display: grid;
+    gap: 5px;
+    margin-top: 10px;
+    padding: 3px; 
+}
+
+.formation-view-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100%;
+    padding: 3px; 
+}
+
+#formation-svg {
+    width: 100%;
+    height: 100%;
+    max-width: 280px;
+    max-height: 280px;
+}
+
+.drone-node {
+    transition: all 0.3s ease;
+}
+
+.drone-node-circle {
+    fill: var(--text-color);
+    stroke: var(--border-color);
+    stroke-width: 2;
+}
+
+.drone-node-text {
+    font-family: 'Space Mono', monospace;
+    fill: var(--bg-primary);
+    text-anchor: middle;
+    dominant-baseline: middle;
+    font-size: 8px;
+}
+
+.drone-detailed-info {
+    padding: 3px; 
+    font-size: 11px;
+    line-height: 1.5;
+}
+
+.drone-details {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+/* Micro Animations for Buttons */
+button {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+button:hover {
+    transform: scale(1.03);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+.position-inputs {
+    display: flex;
+    gap: 5px;
+}
+
+.position-inputs input {
+    flex: 1;
+}

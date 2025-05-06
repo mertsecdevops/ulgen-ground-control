@@ -1,34 +1,4 @@
 document.addEventListener('DOMContentLoaded', () => {
-    // Sekme Sistemi
-    const panelTabs = document.querySelectorAll('.panel-tabs .tab');
-    panelTabs.forEach(tab => {
-        tab.addEventListener('click', () => {
-            const tabGroup = tab.closest('.panel-tabs');
-            const panelContent = tabGroup.nextElementSibling;
-            
-            // Bu gruptaki tüm sekmelerden aktif sınıfını kaldır
-            tabGroup.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            
-            // Bu paneldeki tüm içeriklerden aktif sınıfını kaldır
-            panelContent.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
-            
-            // Tıklanan sekmeye aktif sınıfını ekle
-            tab.classList.add('active');
-            
-            // İlgili içeriğe aktif sınıfını ekle
-            panelContent.querySelector(`.tab-content[data-tab="${tab.dataset.tab}"]`).classList.add('active');
-        });
-    });
-
-    // Formasyon Düğmesi Geçişi
-    const formationButtons = document.querySelectorAll('.formation-btn');
-    formationButtons.forEach(btn => {
-        btn.addEventListener('click', () => {
-            formationButtons.forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            renderFormationView();
-        });
-    });
 
     // Formasyon Görünümü Görselleştirmesi
     function renderFormationView() {
@@ -100,13 +70,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // İlk formasyon görünümünü oluştur
     renderFormationView();
-
-    // Yükseklik sürgüsü değerinin gösterimini güncelle
-    const yukseklikSlider = document.getElementById('yukseklik-slider');
-    const yukseklikValueElem = document.getElementById('yukseklikValue');
-    yukseklikSlider.addEventListener('input', () => {
-        yukseklikValueElem.textContent = yukseklikSlider.value;
-    });
 
     // Görev Tipine Bağlı Dinamik Konum Girişleri
     const areaSelect = document.getElementById('area-select');
