@@ -48,9 +48,9 @@
 
     // Harita için gerekli değişkenler
     let [mapContainer, map, fakeScannedLocations, deckOverlay] = []; // Aynı tip değişkenler undefined olarak başlatılıyor (tek tek yazıp alan kaplamamak için)
-    let cellSize = 5;
+    let cellSize = 4;
     const gpuAggregation = true;
-    const aggregation = 'SUM';
+    let aggregation = 'SUM';
     const maxLibraryLoadTries = 100; // Kütüphanelerin yüklenmesi için maksimum deneme sayısı
     const layerVisibility = [
         { id: 'scan-grid', name: 'Alan Tarama', visible: true },
@@ -150,8 +150,24 @@
         </p>
     </div>
     <div style="display: {hideMap ? 'none':'initial'};" class="map-controls">
-        <label for="">Katman Kontrolleri</label>
-        <div class="layer-controls" id="layer-controls">
+        <label for="map-settings">Harita Ayarları</label>
+        <div id="map-settings">
+            <div class="map-setting-item">
+                <label for="cell-size">Hücre Boyutu:</label>
+                <input type="number" id="cell-size" bind:value={cellSize} min="1" max="100" step="1" />
+            </div>
+            <div class="map-setting-item">
+                <label for="aggregation">Toplama Yöntemi:</label>
+                <select id="aggregation" bind:value={aggregation}>
+                    <option value="SUM">Toplam</option>
+                    <option value="MEAN">Ortalama</option>
+                    <option value="MAX">Maksimum</option>
+                    <option value="MIN">Minimum</option>
+                </select>
+            </div>
+        </div>
+        <label for="layer-controls">Katman Kontrolleri</label>
+        <div id="layer-controls">
             {#each layerVisibility as layer}
                 <div class="layer-control">
                     <input type="checkbox" id="{layer.id}-layer" bind:checked={layer.visible} />
@@ -190,6 +206,19 @@
 
     .map-controls > div {
         padding-left: 10px;
+    }
+
+    #map-settings * {
+        color: white;
+    }
+    #map-settings option {
+        color: initial;
+    }
+
+    #map-settings input, select {
+        border-radius: 0;
+        padding: 3px 3px;
+        background-color: rgba(255, 255, 255, 0.1);
     }
 
     .layer-control {
