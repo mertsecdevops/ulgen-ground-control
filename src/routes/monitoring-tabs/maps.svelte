@@ -53,8 +53,9 @@
     let aggregation = 'SUM';
     const maxLibraryLoadTries = 100; // Kütüphanelerin yüklenmesi için maksimum deneme sayısı
     const layerVisibility = [
-        { id: 'scan-grid', name: 'Alan Tarama', visible: true },
-        { id: 'drones', name: 'Dronlar', visible: false }
+        { id: 'drones', name: 'Dronlar', visible: false },
+        { id: 'path-lines', name: 'İzlenen Yollar', visible: false },
+        { id: 'scan-grid', name: 'Taranan Alan', visible: true },
     ]
     let hideMap = false;
             
