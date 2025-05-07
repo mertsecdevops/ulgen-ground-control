@@ -49,53 +49,54 @@
     // Harita için gerekli değişkenler
     let [mapContainer, map, fakeScannedLocations, deckOverlay] = []; // Aynı tip değişkenler undefined olarak başlatılıyor (tek tek yazıp alan kaplamamak için)
     let cellSize = 4;
-    const gpuAggregation = true;
     let aggregation = 'SUM';
-    const maxLibraryLoadTries = 100; // Kütüphanelerin yüklenmesi için maksimum deneme sayısı
+    
+    const gpuAggregation = true;
     const layerVisibility = [
         { id: 'drones', name: 'Dronlar', visible: false },
         { id: 'path-lines', name: 'İzlenen Yollar', visible: false },
         { id: 'scan-grid', name: 'Taranan Alan', visible: true },
     ]
+
     let hideMap = false;
-            
-    $: {
-        if (map && deckOverlay) {
-            // Update the layer visibility dynamically
-            deckOverlay.setProps({
-                layers: [
-                    new window.deck.ScreenGridLayer({
-                        id: 'scan-grid',
-                        data: fakeScannedLocations,
-                        opacity: 0.6,
-                        getPosition: d => [d[0], d[1]],
-                        getWeight: d => d[2],
-                        cellSizePixels: cellSize,
-                        colorRange,
-                        gpuAggregation,
-                        aggregation,
-                        visible: layerVisibility.find(layer => layer.id === 'scan-grid').visible,
-                        updateTriggers: {
-                            visible: layerVisibility.find(layer => layer.id === 'scan-grid').visible
-                        }
-                    })
-                ]
-            });
-        }
+    const maxLibraryLoadTries = 100; // Kütüphanelerin yüklenmesi için maksimum deneme sayısı
+    const libraryTrialInterval = 500; // Kütüphanelerin yüklenmesi için deneme aralığı (ms)
+
+    $: if (map && deckOverlay) {
+        // Katman değişikliklerini dinamik olarak güncelle
+        const scanGridLayer = new window.deck.ScreenGridLayer({
+            id: 'scan-grid',
+            data: fakeScannedLocations,
+            opacity: 0.6,
+            getPosition: d => [d[0], d[1]],
+            getWeight: d => d[2],
+            cellSizePixels: cellSize,
+            colorRange,
+            gpuAggregation,
+            aggregation,
+            visible: layerVisibility.find(layer => layer.id === 'scan-grid').visible,
+        });
+        deckOverlay.setProps({ layers: [scanGridLayer] });
+    }
+
+    function waitForLibraries(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     onMount(async () => {
         // Harita kütüphanelerinin yüklenmesini bekle
         let libraryLoadTries = 0;
-        while (!window.maplibregl || !window.deck && libraryLoadTries < maxLibraryLoadTries) {
+        while (!window.maplibregl || !window.deck) {
             // Harita kütüphanelerinin yüklenmesini bekle
+            if (++libraryLoadTries >= maxLibraryLoadTries) {
+                console.error('Kütüphaneler birçok denemeye rağmen yüklenemedi. Lütfen internet bağlantınızı kontrol edin.');
+                window.alert('Kütüphaneler birçok denemeye rağmen yüklenemedi. Lütfen internet bağlantınızı kontrol edin.\n Hata: \n\t' + error.message);
+                hideMap = true;
+                return;
+            }
+            console.log(`Kütüphaneler yükleniyor... (${libraryLoadTries})`);
             libraryLoadTries++;
-            await new Promise(resolve => setTimeout(resolve, 500));
-        }
-        if (libraryLoadTries >= maxLibraryLoadTries) {
-            console.error('Kütüphaneler birçok denemeye rağmen yüklenemedi. Lütfen internet bağlantınızı kontrol edin.');
-            hideMap = true;
-            return;
+            await waitForLibraries(libraryTrialInterval);
         }
 
         // Sahte veri oluşturma
@@ -143,14 +144,14 @@
     });
 </script>
 <div id="map-container" bind:this={mapContainer}>
-    <div id="map-warning" style="display: {hideMap ? 'grid':'none'}; align-items: center; justify-items: center; align-content: center; height: 100%; width: 100%;">
+    <div id="map-warning" class:hidden={!hideMap}>
         <h1>Harita Sekmesi</h1>
         <p>
             Bu sekme haritayı görüntülemek için kullanılacaktır,
             eğer bu yazıyı görüyorsanız muhtemelen kütüphanelerin yüklenmesinde bir hata olmuştur.
         </p>
     </div>
-    <div style="display: {hideMap ? 'none':'initial'};" class="map-controls">
+    <div class="map-controls" class:hidden={hideMap}>
         <label for="map-settings">Harita Ayarları</label>
         <div id="map-settings">
             <div class="map-setting-item">
@@ -179,6 +180,10 @@
     </div>
 </div>
 <style>
+    .hidden {
+        display: none !important;
+    }
+
     #map-container {
         width: 100%;
         height: 100%;
@@ -188,6 +193,13 @@
         
         background-color: #fff;
         border: 1px solid var(--border-color);
+    }
+
+    #map-warning {
+        align-items: center; 
+        justify-items: center; 
+        align-content: center; 
+        height: 100%; width: 100%;
     }
     .map-controls {
         user-select: none;;
