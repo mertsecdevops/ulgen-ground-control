@@ -13,7 +13,6 @@
     // Geçici veri oluşturma fonksiyonu
     function generateFakeGridmapData(count = 1000, center = { lat: 39.51, lon: 35.27 }, spread = 0.1) {
         const data = [];
-
         for (let i = 0; i < count; i++) {
             const radius = Math.random() * spread;
             const angle = Math.random() * 2 * Math.PI;
@@ -23,7 +22,21 @@
 
             data.push([lon, lat, intensity]);
         }
+        return data;
+    }
+    function generateFakeDroneLocations(count=3, center = { lat: 39.51, lon: 35.27 }, spread = 0.1) {
+        const data = [];
+        for (let i = 0; i < count; i++) {
+            const radius = Math.random() * spread;
+            const angle = Math.random() * 2 * Math.PI;
+            const lat = center.lat + radius * Math.sin(angle);
+            const lon = center.lon + radius * Math.cos(angle);
 
+            data.push({
+                name: `Drone ${i + 1}`,
+                coordinates: [lon, lat],
+            });
+        }
         return data;
     }
 
@@ -79,12 +92,12 @@
         });
         const dronesLayer = new window.deck.ScenegraphLayer({
             id: 'drones',
-            data: 'https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/bart-stations.json',
+            data: generateFakeDroneLocations(),
             getPosition: d => d.coordinates,
             getOrientation: d => [0, Math.random() * 180, 90],
-            scenegraph: "droneModel",
-            sizeScale: 5000000,
-            _lighting: 'pbr',
+            scenegraph: "https://raw.githubusercontent.com/yussufbiyik/yussufbiyik.github.io/main/assets/drone.glb",
+            sizeScale: 500, //! Boyut zoom a göre değişmeli
+            _lighting: '',
             pickable: true
         })
         layers.push(scanGridLayer);
