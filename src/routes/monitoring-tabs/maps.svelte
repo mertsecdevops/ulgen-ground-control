@@ -75,6 +75,8 @@
         { id: 'scan-grid', name: 'Taranan Alan', visible: true },
     ]
 
+    const DRONE_ORIENTATION = [0, 62, 90];
+    const DRONE_LOCATIONS = generateFakeDroneLocations();
     function createLayers(window, mapSettings = mapSettings) {
         const layers = []
         // Taranan alan katmanı
@@ -92,13 +94,14 @@
         });
         const dronesLayer = new window.deck.ScenegraphLayer({
             id: 'drones',
-            data: generateFakeDroneLocations(),
+            data: DRONE_LOCATIONS,
             getPosition: d => d.coordinates,
-            getOrientation: d => [0, Math.random() * 180, 90],
+            getOrientation: DRONE_ORIENTATION,
             scenegraph: "https://raw.githubusercontent.com/yussufbiyik/yussufbiyik.github.io/main/assets/drone.glb",
             sizeScale: 500, //! Boyut zoom a göre değişmeli
             _lighting: '',
-            pickable: true
+            pickable: true,
+            visible: layerVisibility.find(layer => layer.id === 'drones').visible
         })
         layers.push(scanGridLayer);
         layers.push(dronesLayer);
