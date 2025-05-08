@@ -27,6 +27,8 @@
 
         return data;
     }
+
+    // Harita
     // Haritanın başlangıç durumu ve stil ayarları
     const INITIAL_MAP_STATE = {
         latitude: 39,
@@ -45,25 +47,22 @@
         [240, 59, 32, 212],
         [189, 0, 38, 255]
     ];
-
-    // Harita için gerekli değişkenler
     let [mapContainer, map, fakeScannedLocations, deckOverlay] = []; // Aynı tip değişkenler undefined olarak başlatılıyor (tek tek yazıp alan kaplamamak için)
     let cellSize = 4;
     let aggregation = 'SUM';
-    
     const gpuAggregation = true;
-    const layerVisibility = [
+
+    // Harita katmanları
+    var layerVisibility = [
         { id: 'drones', name: 'Dronlar', visible: false },
-        { id: 'path-lines', name: 'İzlenen Yollar', visible: false },
+        { id: 'drone-paths', name: 'İzlenecek Rota', visible: false },
+        { id: 'drone-traces', name: 'Geçmiş Rota', visible: false },
         { id: 'scan-grid', name: 'Taranan Alan', visible: true },
     ]
 
-    let hideMap = false;
-    const maxLibraryLoadTries = 100; // Kütüphanelerin yüklenmesi için maksimum deneme sayısı
-    const libraryTrialInterval = 500; // Kütüphanelerin yüklenmesi için deneme aralığı (ms)
-
-    $: if (map && deckOverlay) {
-        // Katman değişikliklerini dinamik olarak güncelle
+    function createLayers(window) {
+        const layers = []
+        // Taranan alan katmanı
         const scanGridLayer = new window.deck.ScreenGridLayer({
             id: 'scan-grid',
             data: fakeScannedLocations,
@@ -74,11 +73,21 @@
             colorRange,
             gpuAggregation,
             aggregation,
-            visible: layerVisibility.find(layer => layer.id === 'scan-grid').visible,
+            visible: layerVisibility.find(layer => layer.id === 'scan-grid').visible
         });
-        deckOverlay.setProps({ layers: [scanGridLayer] });
+        layers.push(scanGridLayer);
+        return layers;
     }
 
+    // Katman değişikliklerini dinamik olarak güncelle
+    $: if (map && deckOverlay && layerVisibility) {
+        deckOverlay.setProps({ layers: createLayers(window) });
+    }
+
+    // Harita kütüphanelerinin yüklenmesini bekle
+    let hideMap = false;
+    const maxLibraryLoadTries = 100; // maksimum deneme sayısı
+    const libraryTrialInterval = 500; // deneme sıklığı (ms)
     function waitForLibraries(ms) {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
@@ -87,7 +96,6 @@
         // Harita kütüphanelerinin yüklenmesini bekle
         let libraryLoadTries = 0;
         while (!window.maplibregl || !window.deck) {
-            // Harita kütüphanelerinin yüklenmesini bekle
             if (++libraryLoadTries >= maxLibraryLoadTries) {
                 console.error('Kütüphaneler birçok denemeye rağmen yüklenemedi. Lütfen internet bağlantınızı kontrol edin.');
                 window.alert('Kütüphaneler birçok denemeye rağmen yüklenemedi. Lütfen internet bağlantınızı kontrol edin.\n Hata: \n\t' + error.message);
@@ -99,9 +107,9 @@
             await waitForLibraries(libraryTrialInterval);
         }
 
-        // Sahte veri oluşturma
+        // Sahte veri oluştur
         fakeScannedLocations = generateFakeGridmapData(2000)
-        // Haritayı oluşturma
+        // Haritayı oluştur
         map = new window.maplibregl.Map({
             container: mapContainer,
             style: MAP_STYLE,
@@ -115,24 +123,7 @@
         map.on('load', () => {
             // Harita katmanları
             deckOverlay = new window.deck.MapboxOverlay({
-                layers: [
-                    // Taranan alanları gösteren ızgara katmanı
-                    new window.deck.ScreenGridLayer({
-                        id: 'scan-grid',
-                        data:fakeScannedLocations,
-                        opacity: .6,
-                        getPosition: d => [d[0], d[1]],
-                        getWeight: d => d[2],
-                        cellSizePixels: 5,
-                        colorRange,
-                        gpuAggregation,
-                        aggregation,
-                        visible: layerVisibility.find(layer => layer.id === 'scan-grid').visible,
-                        updateTriggers: {
-                            visible: layerVisibility.find(layer => layer.id === 'scan-grid').visible
-                        }
-                    })
-                ]
+                layers: createLayers(window)
             });
             
             map.addControl(deckOverlay);
