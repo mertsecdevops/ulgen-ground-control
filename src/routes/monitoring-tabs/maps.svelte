@@ -10,7 +10,6 @@
 </svelte:head>
 <script>
     import { onMount } from 'svelte';
-
     // Geçici veri oluşturma fonksiyonu
     function generateFakeGridmapData(count = 1000, center = { lat: 39.51, lon: 35.27 }, spread = 0.1) {
         const data = [];
@@ -48,19 +47,22 @@
         [189, 0, 38, 255]
     ];
     let [mapContainer, map, fakeScannedLocations, deckOverlay] = []; // Aynı tip değişkenler undefined olarak başlatılıyor (tek tek yazıp alan kaplamamak için)
-    let cellSize = 4;
-    let aggregation = 'SUM';
-    const gpuAggregation = true;
+
+    var mapSettings = {
+        cellSize: 4,
+        aggregation: 'SUM',
+        gpuAggregation: true
+    };
 
     // Harita katmanları
     var layerVisibility = [
-        { id: 'drones', name: 'Dronlar', visible: false },
+        { id: 'drones', name: 'Dronlar', visible: true },
         { id: 'drone-paths', name: 'İzlenecek Rota', visible: false },
         { id: 'drone-traces', name: 'Geçmiş Rota', visible: false },
         { id: 'scan-grid', name: 'Taranan Alan', visible: true },
     ]
 
-    function createLayers(window) {
+    function createLayers(window, mapSettings = mapSettings) {
         const layers = []
         // Taranan alan katmanı
         const scanGridLayer = new window.deck.ScreenGridLayer({
@@ -69,13 +71,24 @@
             opacity: 0.6,
             getPosition: d => [d[0], d[1]],
             getWeight: d => d[2],
-            cellSizePixels: cellSize,
+            cellSizePixels: mapSettings.cellSize,
             colorRange,
-            gpuAggregation,
-            aggregation,
+            gpuAggregation: mapSettings.gpuAggregation,
+            aggregation: mapSettings.aggregation,
             visible: layerVisibility.find(layer => layer.id === 'scan-grid').visible
         });
+        const dronesLayer = new window.deck.ScenegraphLayer({
+            id: 'drones',
+            data: 'https://raw.githubusercontent.com/visgl/deck.gl-data/master/website/bart-stations.json',
+            getPosition: d => d.coordinates,
+            getOrientation: d => [0, Math.random() * 180, 90],
+            scenegraph: "droneModel",
+            sizeScale: 5000000,
+            _lighting: 'pbr',
+            pickable: true
+        })
         layers.push(scanGridLayer);
+        layers.push(dronesLayer);
         return layers;
     }
 
@@ -86,7 +99,7 @@
         // bu bloğun tekrar çalışmasını sağlamak
         // aslında bunun daha iyi bir yolu var ama şu an için bu yeterli
         // bilen birisi daha iyi bir yol önerirse hatta yazarsa sevinirim
-        deckOverlay.setProps({ layers: createLayers(window) });
+        deckOverlay.setProps({ layers: createLayers(window, mapSettings) });
     }
 
     // Harita kütüphanelerinin yüklenmesini bekle
@@ -128,7 +141,7 @@
         map.on('load', () => {
             // Harita katmanları
             deckOverlay = new window.deck.MapboxOverlay({
-                layers: createLayers(window)
+                layers: createLayers(window, mapSettings)
             });
             
             map.addControl(deckOverlay);
@@ -152,11 +165,11 @@
         <div id="map-settings">
             <div class="map-setting-item">
                 <label for="cell-size">Hücre Boyutu:</label>
-                <input type="number" id="cell-size" bind:value={cellSize} min="1" max="100" step="1" />
+                <input type="number" id="cell-size" bind:value={mapSettings.cellSize} min="1" max="100" step="1" />
             </div>
             <div class="map-setting-item">
                 <label for="aggregation">Toplama Yöntemi:</label>
-                <select id="aggregation" bind:value={aggregation}>
+                <select id="aggregation" bind:value={mapSettings.aggregation}>
                     <option value="SUM">Toplam</option>
                     <option value="MEAN">Ortalama</option>
                     <option value="MAX">Maksimum</option>
