@@ -81,6 +81,11 @@
 
     // Katman değişikliklerini dinamik olarak güncelle
     $: if (map && deckOverlay && layerVisibility) {
+        // layerVisibility aslında her zaman tanımlı, 
+        // burada yine de if içerisinde olmasının sebebi
+        // bu bloğun tekrar çalışmasını sağlamak
+        // aslında bunun daha iyi bir yolu var ama şu an için bu yeterli
+        // bilen birisi daha iyi bir yol önerirse hatta yazarsa sevinirim
         deckOverlay.setProps({ layers: createLayers(window) });
     }
 
