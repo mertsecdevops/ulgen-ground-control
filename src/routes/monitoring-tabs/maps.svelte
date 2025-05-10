@@ -62,9 +62,11 @@
     let [mapContainer, map, fakeScannedLocations, deckOverlay] = []; // Aynı tip değişkenler undefined olarak başlatılıyor (tek tek yazıp alan kaplamamak için)
 
     var mapSettings = {
-        cellSize: 4,
+        cellSize: 6,
         aggregation: 'SUM',
-        gpuAggregation: true
+        gpuAggregation: true,
+        scannedAreaOpacity: 0.6,
+        droneSize: 150,
     };
 
     // Harita katmanları
@@ -83,7 +85,7 @@
         const scanGridLayer = new window.deck.ScreenGridLayer({
             id: 'scan-grid',
             data: fakeScannedLocations,
-            opacity: 0.6,
+            opacity: mapSettings.scannedAreaOpacity,
             getPosition: d => [d[0], d[1]],
             getWeight: d => d[2],
             cellSizePixels: mapSettings.cellSize,
@@ -95,10 +97,10 @@
         const dronesLayer = new window.deck.ScenegraphLayer({
             id: 'drones',
             data: DRONE_LOCATIONS,
-            getPosition: d => d.coordinates,
+            getPosition: d => [...d.coordinates, 15],
             getOrientation: DRONE_ORIENTATION,
             scenegraph: "https://raw.githubusercontent.com/yussufbiyik/yussufbiyik.github.io/main/assets/drone.glb",
-            sizeScale: 300, //! Boyut zoom a göre değişmeli
+            sizeScale: mapSettings.droneSize, //! Boyut zoom a göre değişmeli
             _lighting: '',
             pickable: true,
             visible: layerVisibility.find(layer => layer.id === 'drones').visible
@@ -108,6 +110,11 @@
         return layers;
     }
 
+    function getTooltip({ object }) {
+        if (!object) return null;
+        return `${object.name}`;
+    }
+
     // Katman değişikliklerini dinamik olarak güncelle
     $: if (map && deckOverlay && layerVisibility) {
         // layerVisibility aslında her zaman tanımlı, 
@@ -115,7 +122,7 @@
         // bu bloğun tekrar çalışmasını sağlamak
         // aslında bunun daha iyi bir yolu var ama şu an için bu yeterli
         // bilen birisi daha iyi bir yol önerirse hatta yazarsa sevinirim
-        deckOverlay.setProps({ layers: createLayers(window, mapSettings) });
+        deckOverlay.setProps({ layers: createLayers(window, mapSettings), getTooltip });
     }
 
     // Harita kütüphanelerinin yüklenmesini bekle
