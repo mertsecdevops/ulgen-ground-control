@@ -7,7 +7,7 @@
 <div class="panel-tabs">
     {#each items as item}
         {#if item.isVisible}
-            <button on:click={handleClick(item.value)} class={activeTabValue === item.value ? 'tab active' : 'tab'}>
+            <button id={item.label.toLowerCase().replace(' ', '-')} on:click={handleClick(item.value)} class={activeTabValue === item.value ? 'tab active' : 'tab'}>
                 {item.label}
             </button>
         {/if}

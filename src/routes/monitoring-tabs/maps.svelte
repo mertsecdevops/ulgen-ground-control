@@ -10,7 +10,7 @@
 </svelte:head>
 <script>
     import { onMount } from 'svelte';
-    // Geçici veri oluşturma fonksiyonu
+    // Geçici veri oluşturma fonksiyonları
     function generateFakeGridmapData(count = 1000, center = { lat: 39.51, lon: 35.27 }, spread = 0.1) {
         const data = [];
         for (let i = 0; i < count; i++) {
@@ -34,6 +34,7 @@
 
             data.push({
                 type: "drone",
+                id: i + 1,
                 name: `Drone ${i + 1}`,
                 coordinates: [lon, lat],
             });
@@ -41,23 +42,28 @@
         return data;
     }
     function generateFakeDronePaths(droneLocations = DRONE_LOCATIONS, minDistance = 500, maxDistance = 1000) {
-        // Work directly with meters (no need to multiply by 1000)
         const data = [];
         droneLocations.forEach((drone, index) => {
             const start = drone.coordinates;
-            // Convert meters to degrees (approximately)
-            // 111000 meters is roughly 1 degree
             const end = [
                 start[0] + (Math.random() * (maxDistance - minDistance) + minDistance) * (Math.random() > 0.5 ? 1 : -1) / 111000,
                 start[1] + (Math.random() * (maxDistance - minDistance) + minDistance) * (Math.random() > 0.5 ? 1 : -1) / 111000
             ];
-            // Calculate distance between points using the Haversine formula
             const dx = end[0] - start[0];
             const dy = end[1] - start[1];
             const length = Math.sqrt(dx * dx + dy * dy) * 111000; // Approximate conversion to meters
             data.push({ type: "target-path", id: index+1, length: (length).toFixed(2) + " m", start, end });
         });
         return data;
+    }
+
+    function changeDroneTab(info, event) {
+        const { object } = info;
+        // Dron tıklanırsa drone sekmesine geç
+        const droneTab = document.querySelector(`#drone-${object.id}`);
+        if (droneTab) {
+            droneTab.click();
+        }
     }
 
     // Harita
@@ -122,9 +128,12 @@
             getPosition: d => [...d.coordinates, 15], // 15 = irtifa
             getOrientation: DRONE_ORIENTATION,
             scenegraph: "https://raw.githubusercontent.com/yussufbiyik/yussufbiyik.github.io/main/assets/drone.glb",
-            sizeScale: mapSettings.droneSize, //! Boyut zoom a göre değişmeli
+            sizeScale: mapSettings.droneSize,
             _lighting: '',
             pickable: true,
+            onClick: (info, event) => {
+                changeDroneTab(info, event);
+            },
             visible: layerVisibility.find(layer => layer.id === 'drones').visible
         });
         const dronePathsLayer = new window.deck.LineLayer({
@@ -164,7 +173,7 @@
         // burada yine de if içerisinde olmasının sebebi
         // bu bloğun tekrar çalışmasını sağlamak
         // aslında bunun daha iyi bir yolu var ama şu an için bu yeterli
-        // bilen birisi daha iyi bir yol önerirse hatta yazarsa sevinirim
+        // bilen birisi daha iyi bir yol önerirse hatta kodlarsa sevinirim
 
         // Harita katmanlarını güncelle
         deckOverlay.setProps({ 
