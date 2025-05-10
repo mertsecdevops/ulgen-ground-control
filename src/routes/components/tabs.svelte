@@ -20,3 +20,21 @@
         {/if}
     {/each}
 </div>
+<style>
+    .tab {
+        background-color: transparent;
+        border: 1px solid var(--border-color);
+        color: var(--text-color);
+        border-radius: 3px;
+        padding: 3px;
+        text-transform: uppercase;
+        font-weight: bold;
+        letter-spacing: 1px;
+        transition: all 0.2s;
+    }
+
+    .tab.active {
+        background-color: var(--text-color);
+        color: var(--bg-primary);
+    }
+</style>

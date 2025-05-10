@@ -98,7 +98,7 @@
             getPosition: d => d.coordinates,
             getOrientation: DRONE_ORIENTATION,
             scenegraph: "https://raw.githubusercontent.com/yussufbiyik/yussufbiyik.github.io/main/assets/drone.glb",
-            sizeScale: 500, //! Boyut zoom a göre değişmeli
+            sizeScale: 300, //! Boyut zoom a göre değişmeli
             _lighting: '',
             pickable: true,
             visible: layerVisibility.find(layer => layer.id === 'drones').visible
