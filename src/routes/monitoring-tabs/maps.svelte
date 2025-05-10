@@ -33,10 +33,30 @@
             const lon = center.lon + radius * Math.cos(angle);
 
             data.push({
+                type: "drone",
                 name: `Drone ${i + 1}`,
                 coordinates: [lon, lat],
             });
         }
+        return data;
+    }
+    function generateFakeDronePaths(droneLocations = DRONE_LOCATIONS, minDistance = 500, maxDistance = 1000) {
+        // Work directly with meters (no need to multiply by 1000)
+        const data = [];
+        droneLocations.forEach((drone, index) => {
+            const start = drone.coordinates;
+            // Convert meters to degrees (approximately)
+            // 111000 meters is roughly 1 degree
+            const end = [
+                start[0] + (Math.random() * (maxDistance - minDistance) + minDistance) * (Math.random() > 0.5 ? 1 : -1) / 111000,
+                start[1] + (Math.random() * (maxDistance - minDistance) + minDistance) * (Math.random() > 0.5 ? 1 : -1) / 111000
+            ];
+            // Calculate distance between points using the Haversine formula
+            const dx = end[0] - start[0];
+            const dy = end[1] - start[1];
+            const length = Math.sqrt(dx * dx + dy * dy) * 111000; // Approximate conversion to meters
+            data.push({ type: "target-path", id: index+1, length: (length).toFixed(2) + " m", start, end });
+        });
         return data;
     }
 
@@ -67,18 +87,20 @@
         gpuAggregation: true,
         scannedAreaOpacity: 0.6,
         droneSize: 150,
+        pathWidth: 5,
     };
 
     // Harita katmanları
     var layerVisibility = [
         { id: 'drones', name: 'Dronlar', visible: true },
-        { id: 'drone-paths', name: 'İzlenecek Rota', visible: false },
+        { id: 'drone-target-paths', name: 'İzlenecek Rota', visible: true },
         { id: 'drone-traces', name: 'Geçmiş Rota', visible: false },
         { id: 'scan-grid', name: 'Taranan Alan', visible: true },
     ]
 
     const DRONE_ORIENTATION = [0, 62, 90];
     const DRONE_LOCATIONS = generateFakeDroneLocations();
+    const DRONE_PATHS = generateFakeDronePaths(DRONE_LOCATIONS);
     function createLayers(window, mapSettings = mapSettings) {
         const layers = []
         // Taranan alan katmanı
@@ -104,15 +126,36 @@
             _lighting: '',
             pickable: true,
             visible: layerVisibility.find(layer => layer.id === 'drones').visible
-        })
+        });
+        const dronePathsLayer = new window.deck.LineLayer({
+            id: 'drone-target-paths',
+            data: DRONE_PATHS,
+            getSourcePosition: d => d.start,
+            getTargetPosition: d => [...d.end, 0],
+            getColor: d => {
+                const length = parseFloat(d.length);
+                if (length < 500) return [0, 255, 0, 150];
+                if (length > 1000) return [255, 0, 0, 150];
+                return [255, 165, 0, 150];
+            },
+            getWidth: mapSettings.pathWidth,
+            pickable: true,
+            visible: layerVisibility.find(layer => layer.id === 'drone-target-paths').visible
+        });
         layers.push(scanGridLayer);
         layers.push(dronesLayer);
+        layers.push(dronePathsLayer);
         return layers;
     }
 
     function getTooltip({ object }) {
         if (!object) return null;
-        return `${object.name}`;
+        if (object.type === 'drone') {
+            const coordinates = object.coordinates.map(coord => coord.toFixed(4)).join(', ');
+            return `${object.name}\nKoordinatlar: ${coordinates}`;
+        } else if (object.type === 'target-path') {
+            return `${object.id}. Dronunun Hedef Rotası\nUzunluk: ${object.length}`;
+        }
     }
 
     // Katman değişikliklerini dinamik olarak güncelle
@@ -124,7 +167,10 @@
         // bilen birisi daha iyi bir yol önerirse hatta yazarsa sevinirim
 
         // Harita katmanlarını güncelle
-        deckOverlay.setProps({ layers: createLayers(window, mapSettings), getTooltip });
+        deckOverlay.setProps({ 
+            layers: createLayers(window, mapSettings), 
+            getTooltip
+        });
     }
 
     // Harita kütüphanelerinin yüklenmesini bekle
@@ -172,12 +218,14 @@
             map.addControl(deckOverlay);
         });
 
+        // Harita triggerleri eklemek için https://maplibre.org/maplibre-gl-js/docs/API/classes/Map bakılabilir
         map.on('zoom', ()=>{
             let zoom = map.getZoom();
             // Zoom durumuna göre dinamik olarak dron boyutunu ve taranan alan opaklığını ayarla
-            mapSettings.droneSize = Math.ceil(Math.min(Math.max(1500 - (zoom*100), 25), 1500));
-            mapSettings.scannedAreaOpacity = Number(Math.max(Math.min(0.6, (zoom - 4) * 0.1), 0.1)).toFixed(2);
+            mapSettings.droneSize = Math.ceil(Math.min(Math.max(1500 - (zoom*110), 50), 1500));
+            mapSettings.scannedAreaOpacity = Number(Math.max(Math.min(0.6, (zoom - 5) * 0.1), 0.1)).toFixed(2);
         })
+
         return () => {
             if (map) map.remove();
         };
@@ -197,6 +245,10 @@
             <div class="map-setting-item">
                 <label for="cell-size">Hücre Boyutu:</label>
                 <input type="number" id="cell-size" bind:value={mapSettings.cellSize} min="1" max="10" step="1" />
+            </div>
+            <div class="map-setting-item">
+                <label for="path-width">Rota Kalınlığı:</label>
+                <input type="number" id="path-width" bind:value={mapSettings.pathWidth} min="1" max="10" step="1" />
             </div>
             <div class="map-setting-item">
                 <label for="aggregation">Toplama Yöntemi:</label>
