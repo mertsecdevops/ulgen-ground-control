@@ -100,13 +100,14 @@
     var layerVisibility = [
         { id: 'drones', name: 'Dronlar', visible: true },
         { id: 'drone-target-paths', name: 'İzlenecek Rota', visible: true },
-        { id: 'drone-traces', name: 'Geçmiş Rota', visible: false },
+        { id: 'drone-past-paths', name: 'Geçmiş Rota', visible: false },
         { id: 'scan-grid', name: 'Taranan Alan', visible: true },
     ]
 
     const DRONE_ORIENTATION = [0, 62, 90];
     const DRONE_LOCATIONS = generateFakeDroneLocations();
-    const DRONE_PATHS = generateFakeDronePaths(DRONE_LOCATIONS);
+    const DRONE_TARGET_PATHS = generateFakeDronePaths(DRONE_LOCATIONS);
+    const DRONE_PAST_PATHS = generateFakeDronePaths(DRONE_LOCATIONS);
     function createLayers(window, mapSettings = mapSettings) {
         const layers = []
         // Taranan alan katmanı
@@ -138,7 +139,7 @@
         });
         const dronePathsLayer = new window.deck.LineLayer({
             id: 'drone-target-paths',
-            data: DRONE_PATHS,
+            data: DRONE_TARGET_PATHS,
             getSourcePosition: d => d.start,
             getTargetPosition: d => [...d.end, 0],
             getColor: d => {
