@@ -97,7 +97,7 @@
         const dronesLayer = new window.deck.ScenegraphLayer({
             id: 'drones',
             data: DRONE_LOCATIONS,
-            getPosition: d => [...d.coordinates, 15],
+            getPosition: d => [...d.coordinates, 15], // 15 = irtifa
             getOrientation: DRONE_ORIENTATION,
             scenegraph: "https://raw.githubusercontent.com/yussufbiyik/yussufbiyik.github.io/main/assets/drone.glb",
             sizeScale: mapSettings.droneSize, //! Boyut zoom a göre değişmeli
@@ -116,12 +116,14 @@
     }
 
     // Katman değişikliklerini dinamik olarak güncelle
-    $: if (map && deckOverlay && layerVisibility) {
+    $: if (map && deckOverlay && layerVisibility && mapSettings) {
         // layerVisibility aslında her zaman tanımlı, 
         // burada yine de if içerisinde olmasının sebebi
         // bu bloğun tekrar çalışmasını sağlamak
         // aslında bunun daha iyi bir yolu var ama şu an için bu yeterli
         // bilen birisi daha iyi bir yol önerirse hatta yazarsa sevinirim
+
+        // Harita katmanlarını güncelle
         deckOverlay.setProps({ layers: createLayers(window, mapSettings), getTooltip });
     }
 
@@ -169,7 +171,13 @@
             
             map.addControl(deckOverlay);
         });
-        
+
+        map.on('zoom', ()=>{
+            let zoom = map.getZoom();
+            // Zoom durumuna göre dinamik olarak dron boyutunu ve taranan alan opaklığını ayarla
+            mapSettings.droneSize = Math.ceil(Math.min(Math.max(1500 - (zoom*100), 25), 1500));
+            mapSettings.scannedAreaOpacity = Number(Math.max(Math.min(0.6, (zoom - 4) * 0.1), 0.1)).toFixed(2);
+        })
         return () => {
             if (map) map.remove();
         };
@@ -188,7 +196,7 @@
         <div id="map-settings">
             <div class="map-setting-item">
                 <label for="cell-size">Hücre Boyutu:</label>
-                <input type="number" id="cell-size" bind:value={mapSettings.cellSize} min="1" max="100" step="1" />
+                <input type="number" id="cell-size" bind:value={mapSettings.cellSize} min="1" max="10" step="1" />
             </div>
             <div class="map-setting-item">
                 <label for="aggregation">Toplama Yöntemi:</label>
