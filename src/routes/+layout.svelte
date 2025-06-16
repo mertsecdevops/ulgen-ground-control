@@ -32,6 +32,7 @@
 </script>
 
 <div class="app">
+	<slot/>
 	<main class="ground-control-panel">
 		<section id="mission-planner" class="left-side">
 			<MissionPlanner/>
