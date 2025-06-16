@@ -1,6 +1,27 @@
 <script>
     export let drone = {};
     export const isVisible = true;
+    import { onMount } from 'svelte';
+    import ROSLIB from 'roslib';
+    import { rosStore } from '$lib/stores/ros';
+
+    let ros;
+
+    onMount(() => {
+        rosStore.subscribe((r) => {
+        ros = r;
+
+        const stateTopic = new ROSLIB.Topic({
+            ros,
+            name: '/mavros/state',
+            messageType: 'mavros_msgs/State'
+        });
+
+        stateTopic.subscribe((msg) => {
+            console.log('Drone state:', msg);
+        });
+        });
+    });
 </script>
 <div class="drone-status-card">
     <span>{drone.name}</span>

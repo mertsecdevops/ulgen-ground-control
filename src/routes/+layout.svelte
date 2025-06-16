@@ -4,6 +4,7 @@
 	import MissionPlanner from './components/mission-planner.svelte';
 
 	import Tabs from "./components/tabs.svelte";
+  	import { rosStore } from '$lib/stores/ros.js';
 	import { onMount } from 'svelte';
 	
 	const monitoringTabs = import.meta.glob('./monitoring-tabs/*.svelte');
