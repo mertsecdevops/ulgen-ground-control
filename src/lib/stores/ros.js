@@ -1,4 +1,3 @@
-// src/lib/stores/ros.js
 import ROSLIB from 'roslib';
 import { readable, writable } from 'svelte/store';
 
@@ -42,81 +41,98 @@ class DroneStatus {
     }
 }
 
-const drones = [
+const _droneStats = writable([
     new DroneStatus(),
     new DroneStatus(),
     new DroneStatus(),
     new DroneStatus()
-]
+]);
+
+// DroneStats writeable olarak tanımlanıp dışarı sadece okunabilir olarak export ediliyor
+// Bu sayede droneStats store'u sadece subscribe edilebilir, dışarı componentler tarafından güncellenemez.
+// Bu da store'un dışarıdan yanlışlıkla güncellenmesini engeller ve sadece içindeki fonksiyonlar aracılığıyla güncellenmesini sağlar.
+export const droneStats = {
+    subscribe: _droneStats.subscribe
+};
 
 const topics = [
-    {
-        name: 'state',
-        messageType: 'mavros_msgs/State'
-    },
-    {
-        name: 'battery',
-        messageType: 'sensor_msgs/BatteryState'
-    },
-    {
-        name: 'global_position/global',
-        messageType: 'sensor_msgs/NavSatFix'
-    },
-    {
-        name: 'local_position/pose',
-        messageType: 'geometry_msgs/PoseStamped'
-    },
+    {name: 'state', messageType: 'mavros_msgs/State' },
+    {name: 'battery', messageType: 'sensor_msgs/BatteryState' },
+    {name: 'global_position/global', messageType: 'sensor_msgs/NavSatFix' },
+    {name: 'local_position/pose', messageType: 'geometry_msgs/PoseStamped' },
+    {name: 'local_position/velocity_local', messageType: 'geometry_msgs/TwistStamped'},
+    // {name: 'global_position/rel_alt', messageType: 'std_msgs/Float64'}
 ]
 
 function updateDrones(ros) {
-    drones.forEach((drone, i) => {
-        console.log(`🚁 drone${i+1} durumu güncelleniyor...`);
+    _droneStats.update(drones => {
+    return drones.map((drone, i) => {
+        const newDrone = new DroneStatus();
         topics.forEach((topic) => {
             const activeTopic = new ROSLIB.Topic({
-                ros: ros,
+                ros,
                 name: `drone${i+1}/mavros/${topic.name}`,
                 messageType: topic.messageType
             });
-            console.log(`Abone olunuyor: ${activeTopic.name}`);
+
             activeTopic.subscribe((message) => {
-                try {
+                _droneStats.update(ds => {
+                    const updated = [...ds];
+                    const current = updated[i];
+
                     switch (topic.name) {
                         case 'state':
-                            drone.status.state.connected = message.connected;
-                            drone.status.state.armed = message.armed;
-                            drone.status.state.guided = message.guided;
-                            drone.status.state.mode = message.mode;
-                            drone.status.state.system_status = message.system_status;
+                            current.status.state = {
+                                connected: message.connected,
+                                armed: message.armed,
+                                guided: message.guided,
+                                mode: message.mode,
+                                system_status: message.system_status
+                            };
                             break;
                         case 'battery':
-                            drone.status.battery = message.percentage;
+                            current.status.battery = message.percentage;
                             break;
                         case 'global_position/global':
-                            drone.status.position.global.latitude = message.latitude;
-                            drone.status.position.global.longitude = message.longitude;
-                            drone.status.position.global.altitude = message.altitude;
+                            current.status.position.global = {
+                                latitude: message.latitude,
+                                longitude: message.longitude,
+                                altitude: message.altitude
+                            };
                             break;
                         case 'local_position/pose':
-                            drone.status.position.local.x = message.pose.position.x;
-                            drone.status.position.local.y = message.pose.position.y;
-                            drone.status.position.local.z = message.pose.position.z;
-                            drone.status.orientation.x = message.pose.orientation.x;
-                            drone.status.orientation.y = message.pose.orientation.y;
-                            drone.status.orientation.z = message.pose.orientation.z;
-                            drone.status.orientation.w = message.pose.orientation.w;
+                            current.status.position.local = {
+                                x: message.pose.position.x,
+                                y: message.pose.position.y,
+                                z: message.pose.position.z,
+                                w: null
+                            };
+                            current.status.orientation = {
+                                x: message.pose.orientation.x,
+                                y: message.pose.orientation.y,
+                                z: message.pose.orientation.z,
+                                w: message.pose.orientation.w
+                            };
                             break;
-                        default:
-                            console.warn(`Unknown topic: ${topic.name}`);
+                        case 'local_position/velocity_local':
+                            const vx = message.twist.linear.x;
+                            const vy = message.twist.linear.y;
+                            const vz = message.twist.linear.z;
+                            const speed = Math.sqrt(vx*vx + vy*vy + vz*vz).toFixed(2);
+                            current.status.velocity = {vx,vy,vz,speed};
                     }
-                    } catch (error) {
-                        console.error(`Error parsing ${topic.name} message for Drone ${i+1}:`, error);
-                    }
-                }
-            );
+
+                    return updated;
+                });
+            });
         });
+
+        return newDrone;
     });
+});
 }
 
+// ROS bağlantısı için gerekli komutları çalıştırın:
 // roslaunch rosbridge_server rosbridge_websocket.launch
 ros.on('connection', () => {
     console.log('Connected to ROS');
