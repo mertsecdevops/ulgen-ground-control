@@ -5,6 +5,7 @@
 
     let droneTabs = $derived(
         discoveredDrones.map((drone, i) => {
+                let timestamp = new Date().getTime() 
                 return {
                     isVisible: true,
                     label: `Drone ${i + 1}`,
@@ -16,6 +17,7 @@
                             battery: drone.status.battery,
                             location: `${drone.status.position.latitude ?? "-"}, ${drone.status.position.longitude ?? "-"}`,
                             altitude: drone.status.position.altitude,
+                            ping: timestamp - (drone.timestamp),
                         }
                     }
                 };

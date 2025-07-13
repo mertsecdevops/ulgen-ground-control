@@ -60,7 +60,7 @@ export const discoveredDrones = $state([]);
 // XBee mesajlarını formatlamak için kullanılan fonksiyon
 function formatXBeeMessage(data) {
     let _data = data.split(",");
-    return {
+    let formattedData  = {
         id: Number(_data[0]),
         status: {
             armable: Boolean(Number(_data[1])),
@@ -74,7 +74,9 @@ function formatXBeeMessage(data) {
             }
         },
         timestamp: Number(_data[8])
-    };
+    }
+    console.log("Formatlanmış veri:", formattedData);
+    return formattedData;
 }
 
 // Dronların güncellenmesi için kullanılan fonksiyon

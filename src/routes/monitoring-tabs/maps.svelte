@@ -10,6 +10,16 @@
 </svelte:head>
 <script>
     import { onMount } from 'svelte';
+    import { discoveredDrones } from '$lib/states/drone-states.svelte.js';
+
+    // Asıl veri çekme fonksiyonları
+    const droneLocations = $derived(discoveredDrones.map(drone => ({
+            type: "drone",
+            id: drone.id,
+            name: drone.name || `Drone ${drone.id}`,
+            coordinates: [drone.status.position.longitude, drone.status.position.latitude]
+        })));
+    
     // Geçici veri oluşturma fonksiyonları
     function generateFakeGridmapData(count = 1000, center = { lat: 39.51, lon: 35.27 }, spread = 0.1) {
         const data = [];
@@ -87,27 +97,27 @@
     ];
     let [mapContainer, map, fakeScannedLocations, deckOverlay] = []; // Aynı tip değişkenler undefined olarak başlatılıyor (tek tek yazıp alan kaplamamak için)
 
-    var mapSettings = {
+    var mapSettings = $state({
         cellSize: 6,
         aggregation: 'SUM',
         gpuAggregation: true,
         scannedAreaOpacity: 0.6,
         droneSize: 150,
         pathWidth: 5,
-    };
+    });
 
     // Harita katmanları
-    var layerVisibility = [
+    var layerVisibility = $state([
         { id: 'drones', name: 'Dronlar', visible: true },
         { id: 'drone-target-paths', name: 'İzlenecek Rota', visible: true },
         { id: 'drone-past-paths', name: 'Geçmiş Rota', visible: false },
         { id: 'scan-grid', name: 'Taranan Alan', visible: true },
-    ]
+    ])
 
     const DRONE_ORIENTATION = [0, 62, 90];
-    const DRONE_LOCATIONS = generateFakeDroneLocations();
-    const DRONE_TARGET_PATHS = generateFakeDronePaths(DRONE_LOCATIONS);
-    const DRONE_PAST_PATHS = generateFakeDronePaths(DRONE_LOCATIONS);
+    const DRONE_LOCATIONS = $derived(droneLocations);
+    const DRONE_TARGET_PATHS = $derived(generateFakeDronePaths(DRONE_LOCATIONS))
+    const DRONE_PAST_PATHS = $derived(generateFakeDronePaths(DRONE_LOCATIONS));
     function createLayers(window, mapSettings = mapSettings) {
         const layers = []
         // Taranan alan katmanı
@@ -126,7 +136,7 @@
         const dronesLayer = new window.deck.ScenegraphLayer({
             id: 'drones',
             data: DRONE_LOCATIONS,
-            getPosition: d => [...d.coordinates, 15], // 15 = irtifa
+            getPosition: d => [...d.coordinates],
             getOrientation: DRONE_ORIENTATION,
             scenegraph: "https://raw.githubusercontent.com/yussufbiyik/yussufbiyik.github.io/main/assets/drone.glb",
             sizeScale: mapSettings.droneSize,
@@ -136,7 +146,7 @@
                 changeDroneTab(info, event);
             },
             visible: layerVisibility.find(layer => layer.id === 'drones').visible
-        });
+        })
         const dronePathsLayer = new window.deck.LineLayer({
             id: 'drone-target-paths',
             data: DRONE_TARGET_PATHS,
@@ -161,7 +171,7 @@
     function getTooltip({ object }) {
         if (!object) return null;
         if (object.type === 'drone') {
-            const coordinates = object.coordinates.map(coord => coord.toFixed(4)).join(', ');
+            const coordinates = object.coordinates.join(', ');
             return `${object.name}\nKoordinatlar: ${coordinates}`;
         } else if (object.type === 'target-path') {
             return `${object.id}. Dronunun Hedef Rotası\nUzunluk: ${object.length}`;
@@ -169,19 +179,17 @@
     }
 
     // Katman değişikliklerini dinamik olarak güncelle
-    $: if (map && deckOverlay && layerVisibility && mapSettings) {
-        // layerVisibility aslında her zaman tanımlı, 
-        // burada yine de if içerisinde olmasının sebebi
-        // bu bloğun tekrar çalışmasını sağlamak
-        // aslında bunun daha iyi bir yolu var ama şu an için bu yeterli
-        // bilen birisi daha iyi bir yol önerirse hatta kodlarsa sevinirim
+    $effect(() => {
+        layerVisibility.map(l => l.visible);
+        DRONE_LOCATIONS.map(d => d.id);
+        if (deckOverlay) {
+            deckOverlay.setProps({
+                layers: createLayers(window, mapSettings),
+                getTooltip
+            });
+        }
+    });
 
-        // Harita katmanlarını güncelle
-        deckOverlay.setProps({ 
-            layers: createLayers(window, mapSettings), 
-            getTooltip
-        });
-    }
 
     // Harita kütüphanelerinin yüklenmesini bekle
     let hideMap = false;
@@ -232,7 +240,7 @@
         map.on('zoom', ()=>{
             let zoom = map.getZoom();
             // Zoom durumuna göre dinamik olarak dron boyutunu ve taranan alan opaklığını ayarla
-            mapSettings.droneSize = Math.ceil(Math.min(Math.max(1500 - (zoom*110), 50), 1500));
+            mapSettings.droneSize = Math.ceil(Math.min(Math.max(1500 - (zoom*110), 5), 1500));
             mapSettings.scannedAreaOpacity = Number(Math.max(Math.min(0.6, (zoom - 5) * 0.1), 0.1)).toFixed(2);
         })
 

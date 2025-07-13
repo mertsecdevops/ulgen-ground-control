@@ -6,7 +6,8 @@
 <div class="drone-status-card">
     <span>{drone.name}</span>
     <div class="status-indicators">
-        <div class="battery">🔋 {drone.battery}%</div>
+        <span class="battery">🔋 {drone.battery}%</span>
+        <span>📶 Gecikme: {drone.ping}ms</span>
     </div>
 </div>
 <div class="drone-detailed-info">
@@ -19,3 +20,10 @@
     <button class="control-btn return-btn">Üsse Dön</button>
     <button class="control-btn emergency-btn">Acil Durdur</button>
 </div>
+
+<style>
+    .status-indicators {
+        display: grid;
+        grid-auto-flow: row;
+    }
+</style>
