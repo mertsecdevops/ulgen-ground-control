@@ -3,6 +3,7 @@ import time
 import logging
 from queue import Queue, Full
 import functools
+import json
 
 from digi.xbee.devices import XBeeDevice
 from digi.xbee.exception import XBeeException, TransmitException, TimeoutException, InvalidOperatingModeException
@@ -23,8 +24,8 @@ def check_connected(func):
         return func(self, *args, **kwargs)
     return wrapper
 
-class XBeeController:
-    def __init__(self, message_received_callback, port="/dev/ttyUSB0", baudrate=57600, max_queue_size=20):
+class XBeeListener:
+    def __init__(self, message_received_callback, port="/dev/ttyUSB0", baudrate=57600, max_queue_size=200):
         self.port = port
         self.baudrate = baudrate
         self.device = XBeeDevice(port, baudrate)
@@ -45,22 +46,33 @@ class XBeeController:
                 time.sleep(0.1)
                 continue
             message = self.recent_messages.get(timeout=0.5)
-            message_data = message.data.decode('utf-8', errors='replace')
-            logging.info(f"Mesaj işleniyor: {message_data}")
+            logging.info(f"Mesaj işleniyor: {message}")
             self.message_received_callback(message)
             self.recent_messages.task_done()
     
     def default_message_received_callback(self, message):
+        """
+        Xbee'den gelen mesajları işleyen callback fonksiyonu.
+        """
         try:
-            message_data = message.data.decode('utf-8', errors='replace')
-            logging.info(f"Mesaj alındı: {message_data}")
+            message_data = message.data.decode('utf-8')
+            sender = int.from_bytes(message.remote_device.get_64bit_addr().address, "big")
+            message_full = {
+                "sender": f"{sender:016X}",
+                "isBroadcast": message.is_broadcast,
+                "data": message_data,
+                "timestamp": message.timestamp
+            }
+            logging.info(f"Mesaj alındı: {message_full}")
             try:
-                self.recent_messages.put_nowait(message)
+                self.recent_messages.put_nowait(message_full)
                 logging.info("Mesaj kuyruğa eklendi")
             except Full:
-                logging.warning("Kuyruk dolu, en eski mesaj siliniyor.")
+                logging.error(f"Mesaj kuyruğa eklenemedi, kuyruk dolu.")
+                # Kuyruk doluysa en eski mesajı sil ve yeni mesajı ekle
+                logging.info("En eski mesaj siliniyor ve yeni mesaj ekleniyor.")
                 self.recent_messages.get_nowait()
-                self.recent_messages.put_nowait(message)
+                self.recent_messages.put_nowait(message_full)
         except Exception as e:
             logging.error(f"Mesaj işlenirken hata oluştu: {e}")
 
@@ -106,11 +118,11 @@ async def ws_handler(websocket):
         connected_clients.remove(websocket)
 
 # Broadcast fonksiyonu
-async def broadcast_message(message: str):
+async def broadcast_message_to_websocket(message: str):
     disconnected = set()
     for websocket in connected_clients:
         try:
-            await websocket.send(message)
+            await websocket.send(json.dumps(message))
         except:
             disconnected.add(websocket)
     for ws in disconnected:
@@ -118,13 +130,12 @@ async def broadcast_message(message: str):
 
 # XBee'den gelen mesaj callback'i
 def message_received_callback(message):
-    decoded = message.data.decode('utf-8', errors='replace')
-    logging.info(f"XBee mesajı alındı: {decoded}")
     global event_loop
     if event_loop:
         event_loop.call_soon_threadsafe(
-            asyncio.create_task, broadcast_message(f"{decoded}")
+            asyncio.create_task, broadcast_message_to_websocket(message)
         )
+        logging.info(f"WebSocket dinleyicilerine mesaj gönderildi: {message}")
     else:
         logging.error("Event loop tanımlı değil!")
 
@@ -134,7 +145,7 @@ async def main():
     event_loop = asyncio.get_running_loop()
 
     # XBee başlat
-    xbee = XBeeController(port="/dev/ttyUSB0", message_received_callback=message_received_callback)
+    xbee = XBeeListener(port="/dev/ttyUSB0", message_received_callback=message_received_callback)
     xbee.listen()
 
     # WebSocket sunucusunu başlat
@@ -144,7 +155,7 @@ async def main():
     try:
         while True:
             await asyncio.sleep(15)
-            xbee.send_broadcast_message("pattes")
+            # xbee.send_broadcast_message("pattes")
     except KeyboardInterrupt:
         logging.info("Kapatılıyor...")
         xbee.close()

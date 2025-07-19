@@ -17,7 +17,7 @@
                             battery: drone.status.battery,
                             location: `${drone.status.position.latitude ?? "-"}, ${drone.status.position.longitude ?? "-"}`,
                             altitude: drone.status.position.altitude,
-                            ping: timestamp - (drone.timestamp),
+                            ping: (timestamp - (drone.timestamp*1000)).toFixed(0), // Gecikme hesaplama
                         }
                     }
                 };

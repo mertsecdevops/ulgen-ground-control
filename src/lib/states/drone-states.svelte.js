@@ -58,22 +58,24 @@ droneStatusWebsocket.onmessage = (event) => {
 export const discoveredDrones = $state([]);
 
 // XBee mesajlarını formatlamak için kullanılan fonksiyon
-function formatXBeeMessage(data) {
-    let _data = data.split(",");
+function formatXBeeMessage(message) {
+    let _message = JSON.parse(message);
+    console.log("Gelen XBee verisi:", _message);
+    let data = _message.data.split(",");
     let formattedData  = {
-        id: Number(_data[0]),
+        id: _message.sender,
         status: {
-            armable: Boolean(Number(_data[1])),
-            armed: Boolean(Number(_data[2])),
-            flight_mode: Number(_data[3]),
-            battery: Number(_data[4]),
+            armable: Boolean(Number(data[0])),
+            armed: Boolean(Number(data[1])),
+            flight_mode: Number(data[2]),
+            battery: Number(data[3]),
             position: {
-                latitude: Number(_data[5]),
-                longitude: Number(_data[6]),
-                altitude: Number(_data[7])
+                latitude: Number(data[4]),
+                longitude: Number(data[5]),
+                altitude: Number(data[6])
             }
         },
-        timestamp: Number(_data[8])
+        timestamp: _message.timestamp
     }
     console.log("Formatlanmış veri:", formattedData);
     return formattedData;
