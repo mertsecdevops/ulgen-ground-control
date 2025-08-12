@@ -73,6 +73,15 @@ function formatXBeeMessage(message) {
                 latitude: parseFloat(Number(data[4]).toFixed(6)), // Enlem
                 longitude: parseFloat(Number(data[5]).toFixed(6)), // Boylam
                 altitude: parseFloat(Number(data[6]).toFixed(2)) // Yükseklik
+            },
+            velocity: {
+                x: parseFloat(Number(data[9]).toFixed(2)), // X hızı
+                y: parseFloat(Number(data[10]).toFixed(2)), // Y hızı
+                z: parseFloat(Number(data[11]).toFixed(2))  // Z hızı
+            },
+            mission: {
+                index: Number(data[7]), // Mevcut görev
+                status: Number(data[8]), // Mevcut görev durumu
             }
         },
         timestamp: _message.timestamp.toFixed(0) // Zaman damgası

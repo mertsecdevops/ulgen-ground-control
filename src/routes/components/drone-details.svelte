@@ -2,6 +2,34 @@
     export let drone = {};
     export const isVisible = true;
     import { onMount } from 'svelte';
+
+    let mission_status = () => {
+        if (!drone.mission) return "Görev Yok";
+        switch (drone.mission.status) {
+            case 0:
+                return "Devam Ediyor";
+            case 1:
+                return "Tamamlandı";
+            case 2:
+                return "Başarısız/Hatalı Tamamlandı";
+            default:
+                break;
+        }
+    }
+
+    let mission_emoji = () => {
+        if (!drone.mission) return "❌";
+        switch (drone.mission.status) {
+            case 0:
+                return "🚀";
+            case 1:
+                return "✅";
+            case 2:
+                return "❌";
+            default:
+                break;
+        }
+    }
 </script>
 <div class="drone-status-card">
     <span>{drone.name}</span>
@@ -11,9 +39,10 @@
     </div>
 </div>
 <div class="drone-detailed-info">
+    <p>{mission_emoji()} Görev Durumu: {drone.mission.index+1}. Adım - {mission_status()}</p>
     <p>🚩 Konum: {drone.location}</p>
     <p>📏 Yükseklik: {drone.altitude}m</p>
-    <!-- <p>⏩ Hız: - m/s</p> -->
+    <p>⏩ Hız: {Math.sqrt(drone.velocity.x**2+drone.velocity.y**2+drone.velocity.z**2).toFixed(2)} m/s</p>
 </div>
 <div class="drone-controls">
     <h4>Drone Kontrolleri</h4>

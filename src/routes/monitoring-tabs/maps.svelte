@@ -10,6 +10,7 @@
 </svelte:head>
 <script>
     import { onMount } from 'svelte';
+    import { map as mapStore } from '$lib/states/map-states.svelte.js';
     import { discoveredDrones } from '$lib/states/drone-states.svelte.js';
 
     // Asıl veri çekme fonksiyonları
@@ -17,7 +18,13 @@
             type: "drone",
             id: drone.id,
             name: drone.name || `Drone ${drone.id}`,
-            coordinates: [drone.status.position.longitude, drone.status.position.latitude]
+            coordinates: [drone.status.position.longitude, drone.status.position.latitude],
+            orientation: [
+                0, 
+                (Math.atan2(drone.status.velocity.y, drone.status.velocity.x) * (180 / Math.PI))+180,
+                90
+            ]
+            // Hedef nokta da eklenecek
         })));
     
     // Geçici veri oluşturma fonksiyonları
@@ -137,7 +144,7 @@
             id: 'drones',
             data: DRONE_LOCATIONS,
             getPosition: d => [...d.coordinates],
-            getOrientation: DRONE_ORIENTATION,
+            getOrientation: d => [...d.orientation],
             scenegraph: "https://raw.githubusercontent.com/yussufbiyik/yussufbiyik.github.io/main/assets/drone.glb",
             sizeScale: mapSettings.droneSize,
             _lighting: '',
@@ -164,7 +171,7 @@
         });
         layers.push(scanGridLayer);
         layers.push(dronesLayer);
-        layers.push(dronePathsLayer);
+        // layers.push(dronePathsLayer);
         return layers;
     }
 
@@ -213,7 +220,6 @@
             libraryLoadTries++;
             await waitForLibraries(libraryTrialInterval);
         }
-
         // Sahte veri oluştur
         fakeScannedLocations = generateFakeGridmapData(2000)
         // Haritayı oluştur
@@ -226,7 +232,6 @@
             bearing: INITIAL_MAP_STATE.bearing,
             pitch: INITIAL_MAP_STATE.pitch
         });
-
         map.on('load', () => {
             // Harita katmanları
             deckOverlay = new window.deck.MapboxOverlay({
@@ -243,7 +248,7 @@
             mapSettings.droneSize = Math.ceil(Math.min(Math.max(1500 - (zoom*110), 5), 1500));
             mapSettings.scannedAreaOpacity = Number(Math.max(Math.min(0.6, (zoom - 5) * 0.1), 0.1)).toFixed(2);
         })
-
+        mapStore.set(map);
         return () => {
             if (map) map.remove();
         };
