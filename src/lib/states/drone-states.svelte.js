@@ -70,12 +70,12 @@ function formatXBeeMessage(message) {
             flight_mode: Number(data[2]),
             battery: Number(data[3]),
             position: {
-                latitude: Number(data[4]),
-                longitude: Number(data[5]),
-                altitude: Number(data[6])
+                latitude: parseFloat(Number(data[4]).toFixed(6)), // Enlem
+                longitude: parseFloat(Number(data[5]).toFixed(6)), // Boylam
+                altitude: parseFloat(Number(data[6]).toFixed(2)) // Yükseklik
             }
         },
-        timestamp: _message.timestamp
+        timestamp: _message.timestamp.toFixed(0) // Zaman damgası
     }
     console.log("Formatlanmış veri:", formattedData);
     return formattedData;

@@ -13,7 +13,7 @@
 <div class="drone-detailed-info">
     <p>🚩 Konum: {drone.location}</p>
     <p>📏 Yükseklik: {drone.altitude}m</p>
-    <p>⏩ Hız: - m/s</p>
+    <!-- <p>⏩ Hız: - m/s</p> -->
 </div>
 <div class="drone-controls">
     <h4>Drone Kontrolleri</h4>

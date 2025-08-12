@@ -29,6 +29,7 @@ class XBeeListener:
         self.port = port
         self.baudrate = baudrate
         self.device = XBeeDevice(port, baudrate)
+        self.device.open()
         self.address = self.device.get_64bit_addr()
         self.message_received_callback = message_received_callback
         self.recent_messages = Queue(maxsize=max_queue_size)
@@ -61,7 +62,7 @@ class XBeeListener:
                 "sender": f"{sender:016X}",
                 "isBroadcast": message.is_broadcast,
                 "data": message_data,
-                "timestamp": message.timestamp
+                "timestamp": message.timestamp,
             }
             logging.info(f"Mesaj alındı: {message_full}")
             try:
@@ -80,6 +81,7 @@ class XBeeListener:
         try:
             if not self.device.is_open():
                 self.device.open()
+                self.address = self.device.get_64bit_addr()
             self.device.add_data_received_callback(self.default_message_received_callback)
             logging.info("XBee dinleniyor...")
         except Exception as e:
@@ -145,7 +147,7 @@ async def main():
     event_loop = asyncio.get_running_loop()
 
     # XBee başlat
-    xbee = XBeeListener(port="/dev/ttyUSB0", message_received_callback=message_received_callback)
+    xbee = XBeeListener(port="/dev/ttyUSB1", message_received_callback=message_received_callback)
     xbee.listen()
 
     # WebSocket sunucusunu başlat
