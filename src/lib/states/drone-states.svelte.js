@@ -86,7 +86,7 @@ function formatXBeeMessage(message) {
         },
         timestamp: _message.timestamp.toFixed(0) // Zaman damgası
     }
-    console.log("Formatlanmış veri:", formattedData);
+    // console.log("Formatlanmış veri:", formattedData);
     return formattedData;
 }
 
@@ -98,7 +98,7 @@ function updateDrone(data) {
     if (index === -1) {
         // Yeni drone ekleniyor
         discoveredDrones.push(formattedData);
-        console.log("Yeni drone keşfedildi:", formattedData);
+        // console.log("Yeni drone keşfedildi:", formattedData);
     } else {
         // Mevcut drone güncelleniyor
         discoveredDrones[index] = formattedData;
