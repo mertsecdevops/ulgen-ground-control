@@ -2,24 +2,23 @@
 	import Tabs from "./tabs.svelte";
     import DroneDetails from "./drone-details.svelte";
     import { discoveredDrones } from '$lib/states/drone-states.svelte.js';
-    import map from "../monitoring-tabs/maps.svelte";
+    import { mapStore } from '$lib/states/map-states.svelte.js';
 
     // Harita üzerinde dronun kamerasını uçurmak için fonksiyon
     const flyCamera = (latitude, longitude) => () => {
-        $effect(
-            map.flyTo({
-                    center: [longitude, latitude],
-                    zoom: 15, // Uçuş sonrası yakınlaştırma seviyesi
-                    speed: 1.2, // Uçuş hızı
-                    curve: 1.5, // Uçuş eğriliği
-                    essential: true // Uçuş animasyonunu zorla
-            })
-        )
+        mapStore.map.flyTo({
+                center: [longitude, latitude],
+                zoom: 20, // Uçuş sonrası yakınlaştırma seviyesi
+                speed: 1.2, // Uçuş hızı
+                curve: 1.5, // Uçuş eğriliği
+                essential: true // Uçuş animasyonunu zorla
+        })
     };
 
     let droneTabs = $derived(
         discoveredDrones.map((drone, i) => {
                 return {
+                    htmlId: `drone-${drone.id}`,
                     isVisible: true,
                     label: `Drone ${i + 1}`,
                     classes: "drone-tab",
@@ -28,13 +27,14 @@
                     component: DroneDetails,
                     props: {
                         drone: {
+                            id: drone.id,
                             name: `🚁 Drone ${i + 1}`,
-                            battery: drone.status.battery,
-                            location: `${drone.status.position.latitude ?? "-"}, ${drone.status.position.longitude ?? "-"}`,
-                            altitude: drone.status.position.altitude,
-                            velocity: drone.status.velocity,
                             mission: drone.status.mission,
                             ping: Date.now() - (drone.timestamp*1000), // Gecikme hesaplama,
+                            location: `${drone.status.position.latitude ?? "-"}, ${drone.status.position.longitude ?? "-"}`,
+                            // battery: drone.status.battery,
+                            // altitude: drone.status.position.altitude,
+                            // velocity: drone.status.velocity,
                         }
                     }
                 };

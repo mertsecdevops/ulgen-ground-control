@@ -5,7 +5,7 @@ from queue import Queue, Full
 import functools
 import json
 
-from digi.xbee.devices import XBeeDevice
+from digi.xbee.devices import XBeeDevice, RemoteXBeeDevice, XBee64BitAddress
 from digi.xbee.exception import XBeeException, TransmitException, TimeoutException, InvalidOperatingModeException
 
 import asyncio
@@ -98,6 +98,20 @@ class XBeeListener:
         except (XBeeException, TimeoutException, TransmitException, InvalidOperatingModeException) as e:
             logging.error(f"XBee gönderim hatası: {e}")
             return False
+    @check_connected
+    def send_to_device(self, device_id_hex: str, data: str):
+        """
+        Send data to a specific XBee device using its 64-bit address (hex string).
+        """
+        try:
+            addr = XBee64BitAddress.from_hex_string(device_id_hex)
+            remote_device = RemoteXBeeDevice(self.device, addr)
+            self.device.send_data(remote_device, data)
+            logging.info(f"Mesaj {device_id_hex} adresine gönderildi: {data}")
+            return True
+        except Exception as e:
+            logging.error(f"XBee gönderim hatası: {e}")
+            return False
 
     def close(self):
         if self.device.is_open():
@@ -111,9 +125,24 @@ async def ws_handler(websocket):
     connected_clients.add(websocket)
     try:
         while True:
-            message = await websocket.recv()
-            logging.info(f"WebSocket mesajı alındı: {message}")
-            await websocket.send(f"Mesaj alındı: {message}")
+            raw_message = await websocket.recv()
+            logging.info(f"WebSocket mesajı alındı: {raw_message}")
+            try:
+                payload = json.loads(raw_message)
+                target = payload.get("target")
+                data = payload.get("data")
+                
+                if target and data:
+                    # Command → send to XBee only
+                    if xbee_instance.send_to_device(target, data):
+                        await websocket.send(json.dumps({"status": "ok", "sent_to": target}))
+                    else:
+                        await websocket.send(json.dumps({"status": "error", "reason": "send_failed"}))
+                else:
+                    # Not a command → maybe telemetry or other broadcast
+                    await broadcast_message_to_websocket(payload)
+            except json.JSONDecodeError:
+                await websocket.send(json.dumps({"status": "error", "reason": "invalid_json"}))
     except websockets.ConnectionClosed:
         logging.info("WebSocket bağlantısı kapatıldı.")
     finally:
@@ -143,24 +172,23 @@ def message_received_callback(message):
 
 # Main async fonksiyonu
 async def main():
-    global event_loop
+    global event_loop, xbee_instance
     event_loop = asyncio.get_running_loop()
 
     # XBee başlat
-    xbee = XBeeListener(port="/dev/ttyUSB1", message_received_callback=message_received_callback)
-    xbee.listen()
+    xbee_instance = XBeeListener(port="/dev/ttyUSB1", message_received_callback=message_received_callback)
+    xbee_instance.listen()
 
-    # WebSocket sunucusunu başlat
+    # WebSocket başlat
     await websockets.serve(ws_handler, "localhost", 8765)
     logging.info("WebSocket sunucusu ws://localhost:8765 üzerinden çalışıyor.")
 
-    try:
-        while True:
+    while True:
+        try:
             await asyncio.sleep(15)
-            # xbee.send_broadcast_message("pattes")
-    except KeyboardInterrupt:
-        logging.info("Kapatılıyor...")
-        xbee.close()
+        except KeyboardInterrupt:
+            logging.info("Kapatılıyor...")
+            xbee_instance.close()
 
 # Giriş noktası
 if __name__ == "__main__":

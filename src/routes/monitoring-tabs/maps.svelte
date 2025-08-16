@@ -10,7 +10,7 @@
 </svelte:head>
 <script>
     import { onMount } from 'svelte';
-    import { map as mapStore } from '$lib/states/map-states.svelte.js';
+    import { mapStore } from '$lib/states/map-states.svelte.js';
     import { discoveredDrones } from '$lib/states/drone-states.svelte.js';
 
     // Asıl veri çekme fonksiyonları
@@ -19,11 +19,11 @@
             id: drone.id,
             name: drone.name || `Drone ${drone.id}`,
             coordinates: [drone.status.position.longitude, drone.status.position.latitude],
-            orientation: [
-                0, 
-                (Math.atan2(drone.status.velocity.y, drone.status.velocity.x) * (180 / Math.PI))+180,
-                90
-            ]
+            // orientation: [
+            //     0, 
+            //     (Math.atan2(drone.status.velocity.y, drone.status.velocity.x) * (180 / Math.PI))+180,
+            //     90
+            // ]
             // Hedef nokta da eklenecek
         })));
     
@@ -144,7 +144,7 @@
             id: 'drones',
             data: DRONE_LOCATIONS,
             getPosition: d => [...d.coordinates],
-            getOrientation: d => [...d.orientation],
+            getOrientation: DRONE_ORIENTATION,
             scenegraph: "https://raw.githubusercontent.com/yussufbiyik/yussufbiyik.github.io/main/assets/drone.glb",
             sizeScale: mapSettings.droneSize,
             _lighting: '',
@@ -245,10 +245,10 @@
         map.on('zoom', ()=>{
             let zoom = map.getZoom();
             // Zoom durumuna göre dinamik olarak dron boyutunu ve taranan alan opaklığını ayarla
-            mapSettings.droneSize = Math.ceil(Math.min(Math.max(1500 - (zoom*110), 5), 1500));
+            mapSettings.droneSize = Math.ceil(Math.min(Math.max(1500 - (zoom*110), 1), 1500));
             mapSettings.scannedAreaOpacity = Number(Math.max(Math.min(0.6, (zoom - 5) * 0.1), 0.1)).toFixed(2);
         })
-        mapStore.set(map);
+        mapStore.map = map
         return () => {
             if (map) map.remove();
         };
