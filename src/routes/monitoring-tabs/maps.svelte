@@ -19,12 +19,6 @@
             id: drone.id,
             name: drone.name || `Drone ${drone.id}`,
             coordinates: [drone.status.position.longitude, drone.status.position.latitude],
-            // orientation: [
-            //     0, 
-            //     (Math.atan2(drone.status.velocity.y, drone.status.velocity.x) * (180 / Math.PI))+180,
-            //     90
-            // ]
-            // Hedef nokta da eklenecek
         })));
 
     function changeDroneTab(info, event) {
@@ -131,9 +125,9 @@
             aggregation: mapSettings.aggregation,
             visible: layerVisibility.find(layer => layer.id === 'scan-grid').visible
         });
-        layers.push(dronesLayer);
         layers.push(dronePastPathsLayer);
         layers.push(scanGridLayer);
+        layers.push(dronesLayer);
         return layers;
     }
 
