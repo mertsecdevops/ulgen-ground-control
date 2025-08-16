@@ -11,7 +11,7 @@
 <script>
     import { onMount } from 'svelte';
     import { mapStore } from '$lib/states/map-states.svelte.js';
-    import { discoveredDrones } from '$lib/states/drone-states.svelte.js';
+    import { discoveredDrones, dronePreviousPoints } from '$lib/states/drone-states.svelte.js';
 
     // Asıl veri çekme fonksiyonları
     const droneLocations = $derived(discoveredDrones.map(drone => ({
@@ -124,7 +124,17 @@
     const DRONE_ORIENTATION = [0, 62, 90];
     const DRONE_LOCATIONS = $derived(droneLocations);
     const DRONE_TARGET_PATHS = $derived(generateFakeDronePaths(DRONE_LOCATIONS))
-    const DRONE_PAST_PATHS = $derived(generateFakeDronePaths(DRONE_LOCATIONS));
+    const DRONE_PAST_PATHS = $derived(dronePreviousPoints.flatMap(drone => {
+        const positions = drone.positions
+        let segments = []
+        for (let i = 0; i < positions.length - 1; i++) {
+            segments.push({
+                start: positions[i],
+                end: positions[i + 1]
+            });
+        }
+        return segments;
+    }));
     function createLayers(window, mapSettings = mapSettings) {
         const layers = []
         // Taranan alan katmanı
@@ -156,20 +166,21 @@
         })
         const dronePathsLayer = new window.deck.LineLayer({
             id: 'drone-target-paths',
-            data: DRONE_TARGET_PATHS,
+            data: DRONE_PAST_PATHS,
+            opacity: 0.8,
             getSourcePosition: d => d.start,
-            getTargetPosition: d => [...d.end, 0],
+            getTargetPosition: d => d.end,
             getColor: d => {
-                const length = parseFloat(d.length);
-                if (length < 500) return [0, 255, 0, 150];
-                if (length > 1000) return [255, 0, 0, 150];
-                return [255, 165, 0, 150];
+                const z = d.start[2];
+                const r = z / 10000;
+                return [255 * (1 - r * 2), 128 * r, 255 * r, 255 * (1 - r)];
             },
             getWidth: mapSettings.pathWidth,
             pickable: true,
             visible: layerVisibility.find(layer => layer.id === 'drone-target-paths').visible
         });
         layers.push(scanGridLayer);
+        layers.push(dronePathsLayer);
         layers.push(dronesLayer);
         // layers.push(dronePathsLayer);
         return layers;
@@ -178,8 +189,7 @@
     function getTooltip({ object }) {
         if (!object) return null;
         if (object.type === 'drone') {
-            const coordinates = object.coordinates.join(', ');
-            return `${object.name}\nKoordinatlar: ${coordinates}`;
+            return `${object.name}\nKoordinatlar: ${object.coordinates[1]}, ${object.coordinates[0]}`;
         } else if (object.type === 'target-path') {
             return `${object.id}. Dronunun Hedef Rotası\nUzunluk: ${object.length}`;
         }

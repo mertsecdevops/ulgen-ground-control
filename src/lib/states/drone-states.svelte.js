@@ -63,8 +63,40 @@ droneStatusWebsocket.onmessage = (event) => {
     updateDrone(event.data);
 };
 
+// Dronların güncellenmesi için kullanılan fonksiyon
+function updateDrone(data) {
+    // Gelen veriyi formatla
+    let formattedData = formatXBeeMessage(data);
+    let indexInDiscoveredDrones = discoveredDrones.findIndex(drone => drone.id === formattedData.id)
+    let indexInPreviousPoints = dronePreviousPoints.findIndex(point => point.id === formattedData.id)
+    if (indexInDiscoveredDrones === -1) {
+        // Yeni drone ekleniyor
+        discoveredDrones.push(formattedData);
+        dronePreviousPoints.push({
+            id: formattedData.id,
+            positions: [ // ilk nokta
+                [
+                    formattedData.status.position.longitude,
+                    formattedData.status.position.latitude,
+                    0
+                ]
+            ]
+        });
+    } else {
+        // Mevcut drone güncelleniyor
+        discoveredDrones[indexInDiscoveredDrones] = formattedData;
+        dronePreviousPoints[indexInPreviousPoints].positions.push([
+            formattedData.status.position.longitude,
+            formattedData.status.position.latitude,
+            0
+        ]);
+    }
+}
+
 // XBee üzerinden keşfedilen dronlar burada tutulur
 export const discoveredDrones = $state([]);
+// Dronların geçmiş rotaları haritada çizdirilmek üzere burada tutulur
+export const dronePreviousPoints = $state([]);
 
 // XBee mesajlarını formatlamak için kullanılan fonksiyon
 function formatXBeeMessage(message) {
@@ -74,19 +106,9 @@ function formatXBeeMessage(message) {
     let formattedData  = {
         id: _message.sender,
         status: {
-            // armable: Boolean(Number(data[0])),
-            // armed: Boolean(Number(data[1])),
-            // flight_mode: Number(data[2]),
-            // battery: Number(data[3]),
             position: {
                 latitude: parseFloat(Number(data[0]))/Math.pow(10,6), // Enlem
                 longitude: parseFloat(Number(data[1]))/Math.pow(10,6), // Boylam
-                // altitude: parseFloat(Number(data[6]).toFixed(2)) // Yükseklik
-            },
-            velocity: {
-                // x: parseFloat(Number(data[9]).toFixed(2)), // X hızı
-                // y: parseFloat(Number(data[10]).toFixed(2)), // Y hızı
-                // z: parseFloat(Number(data[11]).toFixed(2))  // Z hızı
             },
             mission: {
                 index: Number(data[2].slice(0, -1)), // Mevcut görev
@@ -97,19 +119,4 @@ function formatXBeeMessage(message) {
     }
     // console.log("Formatlanmış veri:", formattedData);
     return formattedData;
-}
-
-// Dronların güncellenmesi için kullanılan fonksiyon
-function updateDrone(data) {
-    // Gelen veriyi formatla
-    let formattedData = formatXBeeMessage(data);
-    let index = discoveredDrones.findIndex(drone => drone.id === formattedData.id)
-    if (index === -1) {
-        // Yeni drone ekleniyor
-        discoveredDrones.push(formattedData);
-        // console.log("Yeni drone keşfedildi:", formattedData);
-    } else {
-        // Mevcut drone güncelleniyor
-        discoveredDrones[index] = formattedData;
-    }
 }
