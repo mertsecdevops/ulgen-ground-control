@@ -26,53 +26,6 @@
             // ]
             // Hedef nokta da eklenecek
         })));
-    
-    // Geçici veri oluşturma fonksiyonları
-    function generateFakeGridmapData(count = 1000, center = { lat: 39.51, lon: 35.27 }, spread = 0.1) {
-        const data = [];
-        for (let i = 0; i < count; i++) {
-            const radius = Math.random() * spread;
-            const angle = Math.random() * 2 * Math.PI;
-            const lat = center.lat + radius * Math.sin(angle);
-            const lon = center.lon + radius * Math.cos(angle);
-            const intensity = Math.floor(Math.random() * 100) + 1;
-
-            data.push([lon, lat, intensity]);
-        }
-        return data;
-    }
-    function generateFakeDroneLocations(count=3, center = { lat: 39.51, lon: 35.27 }, spread = 0.1) {
-        const data = [];
-        for (let i = 0; i < count; i++) {
-            const radius = Math.random() * spread;
-            const angle = Math.random() * 2 * Math.PI;
-            const lat = center.lat + radius * Math.sin(angle);
-            const lon = center.lon + radius * Math.cos(angle);
-
-            data.push({
-                type: "drone",
-                id: i + 1,
-                name: `Drone ${i + 1}`,
-                coordinates: [lon, lat],
-            });
-        }
-        return data;
-    }
-    function generateFakeDronePaths(droneLocations = DRONE_LOCATIONS, minDistance = 500, maxDistance = 1000) {
-        const data = [];
-        droneLocations.forEach((drone, index) => {
-            const start = drone.coordinates;
-            const end = [
-                start[0] + (Math.random() * (maxDistance - minDistance) + minDistance) * (Math.random() > 0.5 ? 1 : -1) / 111000,
-                start[1] + (Math.random() * (maxDistance - minDistance) + minDistance) * (Math.random() > 0.5 ? 1 : -1) / 111000
-            ];
-            const dx = end[0] - start[0];
-            const dy = end[1] - start[1];
-            const length = Math.sqrt(dx * dx + dy * dy) * 111000; // Approximate conversion to meters
-            data.push({ type: "target-path", id: index+1, length: (length).toFixed(2) + " m", start, end });
-        });
-        return data;
-    }
 
     function changeDroneTab(info, event) {
         const { object } = info;
@@ -105,7 +58,7 @@
     let [mapContainer, map, fakeScannedLocations, deckOverlay] = []; // Aynı tip değişkenler undefined olarak başlatılıyor (tek tek yazıp alan kaplamamak için)
 
     var mapSettings = $state({
-        cellSize: 6,
+        cellSize: 25,
         aggregation: 'SUM',
         gpuAggregation: true,
         scannedAreaOpacity: 0.6,
@@ -116,8 +69,7 @@
     // Harita katmanları
     var layerVisibility = $state([
         { id: 'drones', name: 'Dronlar', visible: true },
-        { id: 'drone-target-paths', name: 'İzlenecek Rota', visible: true },
-        { id: 'drone-past-paths', name: 'Geçmiş Rota', visible: false },
+        { id: 'drone-past-paths', name: 'Geçilen Rota', visible: true },
         { id: 'scan-grid', name: 'Taranan Alan', visible: true },
     ])
 
@@ -137,19 +89,6 @@
     }));
     function createLayers(window, mapSettings = mapSettings) {
         const layers = []
-        // Taranan alan katmanı
-        const scanGridLayer = new window.deck.ScreenGridLayer({
-            id: 'scan-grid',
-            data: fakeScannedLocations,
-            opacity: mapSettings.scannedAreaOpacity,
-            getPosition: d => [d[0], d[1]],
-            getWeight: d => d[2],
-            cellSizePixels: mapSettings.cellSize,
-            colorRange,
-            gpuAggregation: mapSettings.gpuAggregation,
-            aggregation: mapSettings.aggregation,
-            visible: layerVisibility.find(layer => layer.id === 'scan-grid').visible
-        });
         const dronesLayer = new window.deck.ScenegraphLayer({
             id: 'drones',
             data: DRONE_LOCATIONS,
@@ -164,8 +103,8 @@
             },
             visible: layerVisibility.find(layer => layer.id === 'drones').visible
         })
-        const dronePathsLayer = new window.deck.LineLayer({
-            id: 'drone-target-paths',
+        const dronePastPathsLayer = new window.deck.LineLayer({
+            id: 'drone-past-paths',
             data: DRONE_PAST_PATHS,
             opacity: 0.8,
             getSourcePosition: d => d.start,
@@ -177,12 +116,24 @@
             },
             getWidth: mapSettings.pathWidth,
             pickable: true,
-            visible: layerVisibility.find(layer => layer.id === 'drone-target-paths').visible
+            visible: layerVisibility.find(layer => layer.id === 'drone-past-paths').visible
         });
-        layers.push(scanGridLayer);
-        layers.push(dronePathsLayer);
+        // Taranan alan katmanı
+        const scanGridLayer = new window.deck.ScreenGridLayer({
+            id: 'scan-grid',
+            data: DRONE_PAST_PATHS,
+            opacity: mapSettings.scannedAreaOpacity,
+            getPosition: d => [d.end[0], d.end[1]],
+            getWeight: d => 1,
+            cellSizePixels: mapSettings.cellSize,
+            colorRange,
+            gpuAggregation: mapSettings.gpuAggregation,
+            aggregation: mapSettings.aggregation,
+            visible: layerVisibility.find(layer => layer.id === 'scan-grid').visible
+        });
         layers.push(dronesLayer);
-        // layers.push(dronePathsLayer);
+        layers.push(dronePastPathsLayer);
+        layers.push(scanGridLayer);
         return layers;
     }
 
@@ -230,8 +181,6 @@
             libraryLoadTries++;
             await waitForLibraries(libraryTrialInterval);
         }
-        // Sahte veri oluştur
-        fakeScannedLocations = generateFakeGridmapData(2000)
         // Haritayı oluştur
         map = new window.maplibregl.Map({
             container: mapContainer,
@@ -277,7 +226,7 @@
         <div id="map-settings">
             <div class="map-setting-item">
                 <label for="cell-size">Hücre Boyutu:</label>
-                <input type="number" id="cell-size" bind:value={mapSettings.cellSize} min="1" max="10" step="1" />
+                <input type="number" id="cell-size" bind:value={mapSettings.cellSize} min="25" max="40" step="1" />
             </div>
             <div class="map-setting-item">
                 <label for="path-width">Rota Kalınlığı:</label>
