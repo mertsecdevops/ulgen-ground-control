@@ -89,14 +89,14 @@ class XBeeListener:
             raise
     
     @check_connected
-    def send_broadcast_message(self, data, construct_message=False):
+    def send_broadcast_message(self, data):
         try:
             message = data
             self.device.send_data_broadcast(message)
             logging.info(f"Broadcast gönderildi: {data}")
             return True
         except (XBeeException, TimeoutException, TransmitException, InvalidOperatingModeException) as e:
-            logging.error(f"XBee gönderim hatası: {e}")
+            logging.exception(f"XBee gönderim hatası: {e}")
             return False
     @check_connected
     def send_to_device(self, device_id_hex: str, data: str):
@@ -133,11 +133,16 @@ async def ws_handler(websocket):
                 data = payload.get("data")
                 
                 if target and data:
-                    # Command → send to XBee only
-                    if xbee_instance.send_to_device(target, data):
-                        await websocket.send(json.dumps({"status": "ok", "sent_to": target}))
+                    if target == "broadcast":
+                        if xbee_instance.send_broadcast_message(data):
+                            await websocket.send(json.dumps({"status": "ok", "sent_to": "broadcast"}))
+                        else:
+                            await websocket.send(json.dumps({"status": "error", "reason": "send_failed"}))
                     else:
-                        await websocket.send(json.dumps({"status": "error", "reason": "send_failed"}))
+                        if xbee_instance.send_to_device(target, data):
+                            await websocket.send(json.dumps({"status": "ok", "sent_to": target}))
+                        else:
+                            await websocket.send(json.dumps({"status": "error", "reason": "send_failed"}))
                 else:
                     # Not a command → maybe telemetry or other broadcast
                     await broadcast_message_to_websocket(payload)

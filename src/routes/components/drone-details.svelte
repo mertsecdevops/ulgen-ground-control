@@ -54,8 +54,15 @@
 </div>
 <div class="drone-controls">
     <h4>Drone Kontrolleri</h4>
-    <button on:click={() => sendCommand(drone.id, "home")} class="control-btn return-btn">Üsse Dön</button>
-    <button on:click={() => sendCommand(drone.id, "acil")} class="control-btn emergency-btn">Acil Durdur</button>
+    <button on:click={() => sendCommand(drone.id, "ping")} class="control-btn blue-bg" id="ping-btn">Ses Çıkart</button>
+    <hr>
+    <button on:click={() => sendCommand(drone.id, "rtl")} class="control-btn orange-bg" id="home-btn">Üsse Dön</button>
+    <button on:click={() => sendCommand(drone.id, "lnd")} class="control-btn orange-bg" id="land-btn">İniş Yap</button>
+    <hr>
+    <button on:click={() => sendCommand(drone.id, "rst")} class="control-btn red-bg" id="reset-btn">Reset At</button>
+    <button on:click={() => sendCommand(drone.id, "rb")} class="control-btn red-bg" id="reboot-btn">Yeniden Başlat</button>
+    <hr>
+    <button on:click={() => sendCommand(drone.id, "kill")} class="control-btn red-bg" id="emergency-btn">Kill Switch</button>
 </div>
 
 <style>

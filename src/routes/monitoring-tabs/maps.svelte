@@ -64,7 +64,7 @@
     var layerVisibility = $state([
         { id: 'drones', name: 'Dronlar', visible: true },
         { id: 'drone-past-paths', name: 'Geçilen Rota', visible: true },
-        { id: 'scan-grid', name: 'Taranan Alan', visible: true },
+        { id: 'scan-grid', name: 'Taranan Alan', visible: false },
     ])
 
     const DRONE_ORIENTATION = [0, 62, 90];
