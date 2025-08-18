@@ -181,7 +181,7 @@ async def main():
     event_loop = asyncio.get_running_loop()
 
     # XBee başlat
-    xbee_instance = XBeeListener(port="/dev/ttyUSB1", message_received_callback=message_received_callback)
+    xbee_instance = XBeeListener(port="/dev/ttyUSB0", message_received_callback=message_received_callback)
     xbee_instance.listen()
 
     # WebSocket başlat
