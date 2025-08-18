@@ -2,12 +2,15 @@
     export let items = [];
     export let activeTabValue = 1;
 
-    const handleClick = tabValue => () => (activeTabValue = tabValue);
+    const handleClick = (tabValue, clickEvent) => () => {
+        activeTabValue = tabValue;
+        clickEvent();
+    };
 </script>
 <div class="panel-tabs">
     {#each items as item}
         {#if item.isVisible}
-            <button id={item.label.toLowerCase().replace(' ', '-')} on:click={handleClick(item.value)} class={activeTabValue === item.value ? 'tab active' : 'tab'}>
+            <button id={item.htmlId ? item.htmlId : item.label.toLowerCase().replace(' ', '-')} on:click={handleClick(item.value, item.clickEvent)} class="{item.classes} {activeTabValue === item.value ? 'tab active' : 'tab'}">
                 {item.label}
             </button>
         {/if}

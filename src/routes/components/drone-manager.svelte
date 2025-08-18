@@ -1,57 +1,42 @@
 <script>
 	import Tabs from "./tabs.svelte";
     import DroneDetails from "./drone-details.svelte";
-    // Asıl projede dinamik olarak veriler güncellenecek.
-    let droneTabs = [
-        {
-            isVisible: true,
-            label: "Drone 1",
-            value: 1,
-            component: DroneDetails,
-            props: {
-                drone: {
-                    name: "🚁 Drone 1",
-                    battery: 85,
-                    signal: "Güçlü",
-                    location: "42.5° N, 73.2° W",
-                    altitude: 120,
-                    speed: 15,
-                },
-            },
-        },
-        {
-            isVisible: true,
-            label: "Drone 2",
-            value: 2,
-            component: DroneDetails,
-            props: {
-                drone: {
-                    name: "🚁 Drone 2",
-                    battery: 10,
-                    signal: "Zayıf",
-                    location: "42.5° N, 74.2° W",
-                    altitude: 10,
-                    speed: 1,
-                },
-            },
-        },
-        {
-            isVisible: true,
-            label: "Drone 3",
-            value: 3,
-            component: DroneDetails,
-            props: {
-                drone: {
-                    name: "🚁 Drone 3",
-                    battery: 40,
-                    signal: "Orta",
-                    location: "44.5° N, 73.2° W",
-                    altitude: 50,
-                    speed: 15,
-                },
-            },
-        },
-    ]
+    import { discoveredDrones } from '$lib/states/drone-states.svelte.js';
+    import { mapStore } from '$lib/states/map-states.svelte.js';
+
+    // Harita üzerinde dronun kamerasını uçurmak için fonksiyon
+    const flyCamera = (latitude, longitude) => () => {
+        mapStore.map.flyTo({
+                center: [longitude, latitude],
+                zoom: 20, // Uçuş sonrası yakınlaştırma seviyesi
+                speed: 1.2, // Uçuş hızı
+                curve: 1.5, // Uçuş eğriliği
+                essential: true // Uçuş animasyonunu zorla
+        })
+    };
+
+    let droneTabs = $derived(
+        discoveredDrones.map((drone, i) => {
+                return {
+                    htmlId: `drone-${drone.id}`,
+                    isVisible: true,
+                    label: `Drone ${i + 1}`,
+                    classes: "drone-tab",
+                    value: i,
+                    clickEvent: flyCamera(drone.status.position.latitude, drone.status.position.longitude),
+                    component: DroneDetails,
+                    props: {
+                        drone: {
+                            id: drone.id,
+                            name: `🚁 Drone ${i + 1}`,
+                            mission: drone.status.mission,
+                            ping: Date.now() - (drone.timestamp*1000), // Gecikme hesaplama,
+                            location: `${drone.status.position.latitude ?? "-"}, ${drone.status.position.longitude ?? "-"}`,
+                        }
+                    }
+                };
+            }).filter(Boolean) // Bağlantısı olmayan dronları filtrele
+    );
 </script>
 <div class="drone-controls-panel">
     <h2>Drone Detayları</h2>

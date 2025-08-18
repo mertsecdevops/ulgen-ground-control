@@ -10,52 +10,16 @@
 </svelte:head>
 <script>
     import { onMount } from 'svelte';
-    // Geçici veri oluşturma fonksiyonları
-    function generateFakeGridmapData(count = 1000, center = { lat: 39.51, lon: 35.27 }, spread = 0.1) {
-        const data = [];
-        for (let i = 0; i < count; i++) {
-            const radius = Math.random() * spread;
-            const angle = Math.random() * 2 * Math.PI;
-            const lat = center.lat + radius * Math.sin(angle);
-            const lon = center.lon + radius * Math.cos(angle);
-            const intensity = Math.floor(Math.random() * 100) + 1;
+    import { mapStore } from '$lib/states/map-states.svelte.js';
+    import { discoveredDrones, dronePreviousPoints } from '$lib/states/drone-states.svelte.js';
 
-            data.push([lon, lat, intensity]);
-        }
-        return data;
-    }
-    function generateFakeDroneLocations(count=3, center = { lat: 39.51, lon: 35.27 }, spread = 0.1) {
-        const data = [];
-        for (let i = 0; i < count; i++) {
-            const radius = Math.random() * spread;
-            const angle = Math.random() * 2 * Math.PI;
-            const lat = center.lat + radius * Math.sin(angle);
-            const lon = center.lon + radius * Math.cos(angle);
-
-            data.push({
-                type: "drone",
-                id: i + 1,
-                name: `Drone ${i + 1}`,
-                coordinates: [lon, lat],
-            });
-        }
-        return data;
-    }
-    function generateFakeDronePaths(droneLocations = DRONE_LOCATIONS, minDistance = 500, maxDistance = 1000) {
-        const data = [];
-        droneLocations.forEach((drone, index) => {
-            const start = drone.coordinates;
-            const end = [
-                start[0] + (Math.random() * (maxDistance - minDistance) + minDistance) * (Math.random() > 0.5 ? 1 : -1) / 111000,
-                start[1] + (Math.random() * (maxDistance - minDistance) + minDistance) * (Math.random() > 0.5 ? 1 : -1) / 111000
-            ];
-            const dx = end[0] - start[0];
-            const dy = end[1] - start[1];
-            const length = Math.sqrt(dx * dx + dy * dy) * 111000; // Approximate conversion to meters
-            data.push({ type: "target-path", id: index+1, length: (length).toFixed(2) + " m", start, end });
-        });
-        return data;
-    }
+    // Asıl veri çekme fonksiyonları
+    const droneLocations = $derived(discoveredDrones.map(drone => ({
+            type: "drone",
+            id: drone.id,
+            name: drone.name || `Drone ${drone.id}`,
+            coordinates: [drone.status.position.longitude, drone.status.position.latitude],
+        })));
 
     function changeDroneTab(info, event) {
         const { object } = info;
@@ -87,46 +51,42 @@
     ];
     let [mapContainer, map, fakeScannedLocations, deckOverlay] = []; // Aynı tip değişkenler undefined olarak başlatılıyor (tek tek yazıp alan kaplamamak için)
 
-    var mapSettings = {
-        cellSize: 6,
+    var mapSettings = $state({
+        cellSize: 25,
         aggregation: 'SUM',
         gpuAggregation: true,
         scannedAreaOpacity: 0.6,
         droneSize: 150,
         pathWidth: 5,
-    };
+    });
 
     // Harita katmanları
-    var layerVisibility = [
+    var layerVisibility = $state([
         { id: 'drones', name: 'Dronlar', visible: true },
-        { id: 'drone-target-paths', name: 'İzlenecek Rota', visible: true },
-        { id: 'drone-past-paths', name: 'Geçmiş Rota', visible: false },
-        { id: 'scan-grid', name: 'Taranan Alan', visible: true },
-    ]
+        { id: 'drone-past-paths', name: 'Geçilen Rota', visible: true },
+        { id: 'scan-grid', name: 'Taranan Alan', visible: false },
+    ])
 
     const DRONE_ORIENTATION = [0, 62, 90];
-    const DRONE_LOCATIONS = generateFakeDroneLocations();
-    const DRONE_TARGET_PATHS = generateFakeDronePaths(DRONE_LOCATIONS);
-    const DRONE_PAST_PATHS = generateFakeDronePaths(DRONE_LOCATIONS);
+    const DRONE_LOCATIONS = $derived(droneLocations);
+    const DRONE_TARGET_PATHS = $derived(generateFakeDronePaths(DRONE_LOCATIONS))
+    const DRONE_PAST_PATHS = $derived(dronePreviousPoints.flatMap(drone => {
+        const positions = drone.positions
+        let segments = []
+        for (let i = 0; i < positions.length - 1; i++) {
+            segments.push({
+                start: positions[i],
+                end: positions[i + 1]
+            });
+        }
+        return segments;
+    }));
     function createLayers(window, mapSettings = mapSettings) {
         const layers = []
-        // Taranan alan katmanı
-        const scanGridLayer = new window.deck.ScreenGridLayer({
-            id: 'scan-grid',
-            data: fakeScannedLocations,
-            opacity: mapSettings.scannedAreaOpacity,
-            getPosition: d => [d[0], d[1]],
-            getWeight: d => d[2],
-            cellSizePixels: mapSettings.cellSize,
-            colorRange,
-            gpuAggregation: mapSettings.gpuAggregation,
-            aggregation: mapSettings.aggregation,
-            visible: layerVisibility.find(layer => layer.id === 'scan-grid').visible
-        });
         const dronesLayer = new window.deck.ScenegraphLayer({
             id: 'drones',
             data: DRONE_LOCATIONS,
-            getPosition: d => [...d.coordinates, 15], // 15 = irtifa
+            getPosition: d => [...d.coordinates],
             getOrientation: DRONE_ORIENTATION,
             scenegraph: "https://raw.githubusercontent.com/yussufbiyik/yussufbiyik.github.io/main/assets/drone.glb",
             sizeScale: mapSettings.droneSize,
@@ -136,52 +96,62 @@
                 changeDroneTab(info, event);
             },
             visible: layerVisibility.find(layer => layer.id === 'drones').visible
-        });
-        const dronePathsLayer = new window.deck.LineLayer({
-            id: 'drone-target-paths',
-            data: DRONE_TARGET_PATHS,
+        })
+        const dronePastPathsLayer = new window.deck.LineLayer({
+            id: 'drone-past-paths',
+            data: DRONE_PAST_PATHS,
+            opacity: 0.8,
             getSourcePosition: d => d.start,
-            getTargetPosition: d => [...d.end, 0],
+            getTargetPosition: d => d.end,
             getColor: d => {
-                const length = parseFloat(d.length);
-                if (length < 500) return [0, 255, 0, 150];
-                if (length > 1000) return [255, 0, 0, 150];
-                return [255, 165, 0, 150];
+                const z = d.start[2];
+                const r = z / 10000;
+                return [255 * (1 - r * 2), 128 * r, 255 * r, 255 * (1 - r)];
             },
             getWidth: mapSettings.pathWidth,
             pickable: true,
-            visible: layerVisibility.find(layer => layer.id === 'drone-target-paths').visible
+            visible: layerVisibility.find(layer => layer.id === 'drone-past-paths').visible
         });
+        // Taranan alan katmanı
+        const scanGridLayer = new window.deck.ScreenGridLayer({
+            id: 'scan-grid',
+            data: DRONE_PAST_PATHS,
+            opacity: mapSettings.scannedAreaOpacity,
+            getPosition: d => [d.end[0], d.end[1]],
+            getWeight: d => 1,
+            cellSizePixels: mapSettings.cellSize,
+            colorRange,
+            gpuAggregation: mapSettings.gpuAggregation,
+            aggregation: mapSettings.aggregation,
+            visible: layerVisibility.find(layer => layer.id === 'scan-grid').visible
+        });
+        layers.push(dronePastPathsLayer);
         layers.push(scanGridLayer);
         layers.push(dronesLayer);
-        layers.push(dronePathsLayer);
         return layers;
     }
 
     function getTooltip({ object }) {
         if (!object) return null;
         if (object.type === 'drone') {
-            const coordinates = object.coordinates.map(coord => coord.toFixed(4)).join(', ');
-            return `${object.name}\nKoordinatlar: ${coordinates}`;
+            return `${object.name}\nKoordinatlar: ${object.coordinates[1]}, ${object.coordinates[0]}`;
         } else if (object.type === 'target-path') {
             return `${object.id}. Dronunun Hedef Rotası\nUzunluk: ${object.length}`;
         }
     }
 
     // Katman değişikliklerini dinamik olarak güncelle
-    $: if (map && deckOverlay && layerVisibility && mapSettings) {
-        // layerVisibility aslında her zaman tanımlı, 
-        // burada yine de if içerisinde olmasının sebebi
-        // bu bloğun tekrar çalışmasını sağlamak
-        // aslında bunun daha iyi bir yolu var ama şu an için bu yeterli
-        // bilen birisi daha iyi bir yol önerirse hatta kodlarsa sevinirim
+    $effect(() => {
+        layerVisibility.map(l => l.visible);
+        DRONE_LOCATIONS.map(d => d.id);
+        if (deckOverlay) {
+            deckOverlay.setProps({
+                layers: createLayers(window, mapSettings),
+                getTooltip
+            });
+        }
+    });
 
-        // Harita katmanlarını güncelle
-        deckOverlay.setProps({ 
-            layers: createLayers(window, mapSettings), 
-            getTooltip
-        });
-    }
 
     // Harita kütüphanelerinin yüklenmesini bekle
     let hideMap = false;
@@ -205,9 +175,6 @@
             libraryLoadTries++;
             await waitForLibraries(libraryTrialInterval);
         }
-
-        // Sahte veri oluştur
-        fakeScannedLocations = generateFakeGridmapData(2000)
         // Haritayı oluştur
         map = new window.maplibregl.Map({
             container: mapContainer,
@@ -218,7 +185,6 @@
             bearing: INITIAL_MAP_STATE.bearing,
             pitch: INITIAL_MAP_STATE.pitch
         });
-
         map.on('load', () => {
             // Harita katmanları
             deckOverlay = new window.deck.MapboxOverlay({
@@ -232,10 +198,10 @@
         map.on('zoom', ()=>{
             let zoom = map.getZoom();
             // Zoom durumuna göre dinamik olarak dron boyutunu ve taranan alan opaklığını ayarla
-            mapSettings.droneSize = Math.ceil(Math.min(Math.max(1500 - (zoom*110), 50), 1500));
+            mapSettings.droneSize = Math.ceil(Math.min(Math.max(1500 - (zoom*110), 1), 1500));
             mapSettings.scannedAreaOpacity = Number(Math.max(Math.min(0.6, (zoom - 5) * 0.1), 0.1)).toFixed(2);
         })
-
+        mapStore.map = map
         return () => {
             if (map) map.remove();
         };
@@ -254,7 +220,7 @@
         <div id="map-settings">
             <div class="map-setting-item">
                 <label for="cell-size">Hücre Boyutu:</label>
-                <input type="number" id="cell-size" bind:value={mapSettings.cellSize} min="1" max="10" step="1" />
+                <input type="number" id="cell-size" bind:value={mapSettings.cellSize} min="25" max="40" step="1" />
             </div>
             <div class="map-setting-item">
                 <label for="path-width">Rota Kalınlığı:</label>

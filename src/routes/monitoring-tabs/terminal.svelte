@@ -1,7 +1,7 @@
 <script context="module">
     export const name = 'Terminal';
     export const priority = 4;
-    export const isVisible = true;
+    export const isVisible = false;
 </script>
 <div class="terminal-output">
     <div class="terminal-header">
