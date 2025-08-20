@@ -1,8 +1,28 @@
 <script>
     import { onMount } from "svelte";
-    import { sendWebSocketMessage } from '$lib/states/drone-states.svelte.js';
+    import { sendWebSocketMessage, discoveredDrones } from '$lib/states/drone-states.svelte.js';
 
-    let sendCommand = (target, command) => {
+    let sendCommand = (target, command, is_mission_message = false) => {
+        if (selectedMission === "birey" && selectedDrones.length < 1 && is_mission_message) {
+            alert("Lütfen en az üç drone seçin.");
+            return;
+        }
+        if (selectedMission === "birey" && is_mission_message) {
+            discoveredDrones.forEach(drone => {
+                let is_main_member = selectedDrones.includes(drone.id) ? 1 : 0;
+                let _command_array = command.split(',')
+                let command_array = [
+                    ..._command_array.slice(0, 5),
+                    is_main_member,
+                    ..._command_array.slice(5)
+                ]
+                sendWebSocketMessage({
+                    target: drone.id,
+                    data: `${command_array.join(',')}`
+                });
+            });
+            return;
+        }
         sendWebSocketMessage({
             target: target,
             data: command
@@ -14,7 +34,6 @@
         { name: "Çizgi", value: "cizgi" },
         { name: "Ok Başı", value: "ok",},
     ];
-    let activeFormation = "v"; // Varsayılan formasyon
     const missions = [
         { name: "3B Formasyon", value: "formasyon"},
         { name: "Sürü Navigasyon", value: "navigasyon" },
@@ -22,8 +41,23 @@
         { name: "Sürü Keşif", value: "kesif",},
     ];
     let selectedPositions = [
-        // Arayüzden girilen pozisyonlar buraya gelir
-    ]
+        // Seçilen pozisyonlar buraya gelir
+    ];
+    let selectedDrones = [
+        // Seçilen dronlar buraya gelir
+    ];
+    let selectedFormations = [
+        // Seçilen formasyonlar buraya gelir
+    ];
+
+    // Seçilen dronları toggle eden fonksiyon
+    let toggleDroneSelection = (droneId) => {
+        if (selectedDrones.includes(droneId)) {
+            selectedDrones = selectedDrones.filter(id => id !== droneId);
+        } else {
+            selectedDrones = [...selectedDrones, droneId];
+        }
+    };
 
     // GPS Girdileri
     let latValue1 = 0;
@@ -39,9 +73,9 @@
     let yukseklikValue = 10; // Varsayılan yükseklik değeri
     let droneDistanceValue = 5; // Varsayılan dronlar arası mesafe değeri
     let formationProtectionTimeValue = 5; // Varsayılan formasyon koruma süresi değeri (saniye)
-    let selectedMission = "navigasyon"; // Varsayılan pozisyon tipi
+    let selectedMission = "formasyon"; // Varsayılan pozisyon tipi
 
-    let locationInputType = "gps"
+    let locationInputType = "ned"
     let missionExecutionType = "normal"
 
     let addPosition = () => {
@@ -55,12 +89,20 @@
         selectedPositions = selectedPositions.filter(pos => pos !== position);
     };
 
+    let addFormation = (formation) => {
+        selectedFormations = [...selectedFormations, formation];
+    };
+
+    let removeFormation = (formation) => {
+        selectedFormations = selectedFormations.filter(f => f !== formation);
+    };
+
     function getMissionSpecificParameters() {
         switch (selectedMission) {
             case "formasyon":
-                return activeFormation
+                return selectedFormations.join(',');
             case "navigasyon":
-                let nav_str = `${activeFormation},${locationInputType === "gps" ? "0" : "1"}`;
+                let nav_str = `${selectedFormations[0]},${locationInputType === "gps" ? "0" : "1"}`;
                 for (let pos of selectedPositions) {
                     if (Object.keys(pos).includes("latitude") && locationInputType === "gps") {
                         nav_str += `,${pos.latitude},${pos.longitude}`.replace('.','');
@@ -69,23 +111,34 @@
                         nav_str += `,${pos.north},${pos.east}`;
                     }
                 }
-                console.log(nav_str);
                 return nav_str;
             case "birey":
-                // Kalkışı yapacak dronların XBee adresleri çekilecek
-                return ''
+                let birey_str = `${selectedFormations[0]},${locationInputType === "gps" ? "0" : "1"}`;
+                for (let pos of selectedPositions) {
+                    if (Object.keys(pos).includes("latitude") && locationInputType === "gps") {
+                        birey_str += `,${pos.latitude},${pos.longitude}`.replace('.','');
+                    }
+                    else if (Object.keys(pos).includes("north") && locationInputType === "ned") {
+                        birey_str += `,${pos.north},${pos.east}`;
+                    }
+                }
+                return birey_str;
             case "kesif":
                 // NED koordinatlar
-                let kesif_str = `1,${nedX1},${nedY1},${nedX2},${nedY2}`;
-                if (locationInputType == "gps") {
-                    kesif_str = `0,${latValue1},${lonValue1},${latValue2},${lonValue2}`.replace('.','');
+                let kesif_str = `${selectedFormations[0]},${locationInputType === "gps" ? "0" : "1"}`;
+                for (let pos of selectedPositions) {
+                    if (Object.keys(pos).includes("latitude") && locationInputType === "gps") {
+                        kesif_str += `,${pos.latitude},${pos.longitude}`.replace('.','');
+                    }
+                    else if (Object.keys(pos).includes("north") && locationInputType === "ned") {
+                        kesif_str += `,${pos.north},${pos.east}`;
+                    }
                 }
                 return kesif_str;
             default:
                 return "";
         }
     }
-
     let missionMessage = () => {return `g,${missions.findIndex(m => m.value === selectedMission)},${yukseklikValue},${droneDistanceValue},${formationProtectionTimeValue},${getMissionSpecificParameters()}`}
 </script>
 <div class="mission-planner">
@@ -121,7 +174,17 @@
                         <label for="pid-apf-mode-toggle">PID+APF Modu</label>
                         <input type="checkbox" id="pid-apf-mode-toggle" name="isPIDAPF" value="PID+APF Modu" checked={missionExecutionType === "pid_apf"} on:change={() => missionExecutionType = missionExecutionType === "pid_apf" ? "normal" : "pid_apf"}>
                     </div>
-                    <div class="all-position-inputs light-border {["navigasyon", "kesif"].includes(selectedMission) ? '' : 'hidden'}">
+                    <div class="drone-inputs light-border {["birey"].includes(selectedMission) ? '' : 'hidden'}">
+                        <label for="drone-selector">Ana Grup Bireyleri:</label>
+                        <div class="drone-selector" id="drone-selector">
+                            {#each discoveredDrones as drone}
+                                <button class="drone-btn {selectedDrones.includes(drone.id) ? 'active' : ''}" on:click={() => toggleDroneSelection(drone.id)}>
+                                    {drone.id}
+                                </button>
+                            {/each}
+                        </div>
+                    </div>
+                    <div class="all-position-inputs light-border {["navigasyon", "kesif", "birey"].includes(selectedMission) ? '' : 'hidden'}">
                         <div style="gap:5px;display: grid;grid-auto-flow: column;align-items: center;justify-content: start;">
                             <label for="gps-mode-toggle">GPS Girdisi</label>
                             <input type="checkbox" id="gps-mode-toggle" name="isGPS" value="GPS Girdisi" checked={locationInputType === "gps"} on:change={() => locationInputType = locationInputType === "gps" ? "ned" : "gps"}>
@@ -152,18 +215,26 @@
                             </div>
                         </div>
                     </div>
-                    <div class="formation-inputs light-border {["formasyon", "navigasyon"].includes(selectedMission) ? '' : 'hidden'}">
+                    <div class="formation-inputs light-border {["formasyon", "navigasyon", "birey"].includes(selectedMission) ? '' : 'hidden'}">
                         <label for="formation-selector">Formasyon:</label>
                         <div class="formation-selector" id="formation-selector">
                             {#each formations as formation}
-                                <button class="formation-btn {activeFormation === formation.value ? 'active' : ''}" on:click={() => activeFormation = formation.value}>
+                                <button class="formation-btn" on:click={() => addFormation(formation.value)}>
                                     {formation.name}
                                 </button>
                             {/each}
                         </div>
+                        {#each selectedFormations as formation}
+                            <div class="selected-position light-border">
+                                <span>
+                                    {formation}
+                                </span>
+                                <button class="control-btn red-bg" on:click={() => removeFormation(formation)}>Sil</button>
+                            </div>
+                        {/each}
                     </div>
                 </div>
-                <button on:click={() => sendCommand("broadcast", missionMessage())} class="control-btn blue-bg">Görevi Gönder</button>
+                <button on:click={() => sendCommand("broadcast", missionMessage(), true)} class="control-btn blue-bg">Görevi Gönder</button>
                 <button on:click={() => sendCommand("broadcast", "abrt")} class="control-btn red-bg">Aktif Görevi İptal Et</button>
             </div>
         </div>
@@ -209,6 +280,8 @@
 
     .param-sliders {
         padding: 3px; 
+        max-height: 600px;
+        overflow-y: auto;
     }
     .param-sliders-group {
         gap: 5px;
@@ -219,13 +292,13 @@
     .param-item {
         padding: 0px 2px;
         display: grid;
-        grid-auto-rows: auto 1fr;
+        /* grid-auto-rows: auto 1fr; */
         align-items: end;
     }
-    .formation-btn {
+    .formation-btn, .drone-btn {
         padding: 1px;
     }
-    .formation-btn.active{
+    .formation-btn.active, .drone-btn.active {
         background-color: var(--text-color);
         color: var(--bg-primary);
     }

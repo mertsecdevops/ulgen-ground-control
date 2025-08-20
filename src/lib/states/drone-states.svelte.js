@@ -67,6 +67,7 @@ droneStatusWebsocket.onmessage = (event) => {
 function updateDrone(data) {
     // Gelen veriyi formatla
     let formattedData = formatXBeeMessage(data);
+    if (!formattedData) return; // Geçersiz veri durumunda çık
     let indexInDiscoveredDrones = discoveredDrones.findIndex(drone => drone.id === formattedData.id)
     let indexInPreviousPoints = dronePreviousPoints.findIndex(point => point.id === formattedData.id)
     if (indexInDiscoveredDrones === -1) {
@@ -101,8 +102,16 @@ export const dronePreviousPoints = $state([]);
 // XBee mesajlarını formatlamak için kullanılan fonksiyon
 function formatXBeeMessage(message) {
     let _message = JSON.parse(message);
+    if (!_message || !_message.data || !_message.sender || !_message.timestamp) {
+        console.error("Geçersiz XBee mesajı:", _message);
+        return null;
+    }
     // console.log("Gelen XBee verisi:", _message);
     let data = _message.data.split(",");
+    if (data.length < 3) {
+        console.error("Geçersiz XBee verisi:", data);
+        return null;
+    }
     let formattedData  = {
         id: _message.sender,
         status: {
