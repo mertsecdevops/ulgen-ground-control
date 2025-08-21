@@ -38,6 +38,7 @@
         { name: "3B Formasyon", value: "formasyon"},
         { name: "Sürü Navigasyon", value: "navigasyon" },
         { name: "Birey Ekleme Çıkarma", value: "birey",},
+        { name: "Birey Ekleme Çıkarma (3 Drone)", value: "birey3",},
         { name: "Sürü Keşif", value: "kesif",},
     ];
     let selectedPositions = [
@@ -123,6 +124,17 @@
                     }
                 }
                 return birey_str;
+            case "birey3":
+                let birey3_str = `${selectedFormations[0]},${locationInputType === "gps" ? "0" : "1"}`;
+                for (let pos of selectedPositions) {
+                    if (Object.keys(pos).includes("latitude") && locationInputType === "gps") {
+                        birey3_str += `,${pos.latitude},${pos.longitude}`.replace('.','');
+                    }
+                    else if (Object.keys(pos).includes("north") && locationInputType === "ned") {
+                        birey3_str += `,${pos.north},${pos.east}`;
+                    }
+                }
+                return birey3_str;
             case "kesif":
                 // NED koordinatlar
                 let kesif_str = `${selectedFormations[0]},${locationInputType === "gps" ? "0" : "1"}`;
@@ -184,7 +196,7 @@
                             {/each}
                         </div>
                     </div>
-                    <div class="all-position-inputs light-border {["navigasyon", "kesif", "birey"].includes(selectedMission) ? '' : 'hidden'}">
+                    <div class="all-position-inputs light-border {["navigasyon", "kesif", "birey", "birey3"].includes(selectedMission) ? '' : 'hidden'}">
                         <div style="gap:5px;display: grid;grid-auto-flow: column;align-items: center;justify-content: start;">
                             <label for="gps-mode-toggle">GPS Girdisi</label>
                             <input type="checkbox" id="gps-mode-toggle" name="isGPS" value="GPS Girdisi" checked={locationInputType === "gps"} on:change={() => locationInputType = locationInputType === "gps" ? "ned" : "gps"}>
@@ -215,7 +227,7 @@
                             </div>
                         </div>
                     </div>
-                    <div class="formation-inputs light-border {["formasyon", "navigasyon", "birey"].includes(selectedMission) ? '' : 'hidden'}">
+                    <div class="formation-inputs light-border {["formasyon", "navigasyon", "birey", "birey3"].includes(selectedMission) ? '' : 'hidden'}">
                         <label for="formation-selector">Formasyon:</label>
                         <div class="formation-selector" id="formation-selector">
                             {#each formations as formation}

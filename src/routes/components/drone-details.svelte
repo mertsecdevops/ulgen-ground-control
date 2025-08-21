@@ -57,6 +57,7 @@
     <button on:click={() => sendCommand(drone.id, "ping")} class="control-btn blue-bg" id="ping-btn">Ses Çıkart</button>
     <hr>
     <button on:click={() => sendCommand(drone.id, "rtl")} class="control-btn orange-bg" id="home-btn">Üsse Dön</button>
+    <button on:click={() => sendCommand("broadcast", `fl,${drone.id}`)} class="control-btn orange-bg" id="home-btn">Formasyondan Çıkar ve Geri Ekle</button>
     <button on:click={() => sendCommand(drone.id, "lnd")} class="control-btn orange-bg" id="land-btn">İniş Yap</button>
     <hr>
     <button on:click={() => sendCommand(drone.id, "rst")} class="control-btn red-bg" id="reset-btn">Reset At</button>
