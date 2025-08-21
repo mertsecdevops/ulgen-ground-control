@@ -253,6 +253,7 @@
     </div>
     <div class="mission-launch-controls">
         <h4>Sürü Kontrolleri</h4>
+        <button on:click={() => sendCommand("broadcast", "ping")} class="control-btn blue-bg" id="swarm-return-btn">Ses Çal</button>
         <button on:click={() => sendCommand("broadcast", "rtl")} class="control-btn orange-bg" id="swarm-return-btn">Üsse Dön</button>
         <button on:click={() => sendCommand("broadcast", "lnd")} class="control-btn orange-bg" id="swarm-land-btn">Toplu İniş Yap</button>
         <hr>

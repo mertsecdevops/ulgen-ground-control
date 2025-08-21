@@ -54,7 +54,7 @@
 </div>
 <div class="drone-controls">
     <h4>Drone Kontrolleri</h4>
-    <button on:click={() => sendCommand(drone.id, "ping")} class="control-btn blue-bg" id="ping-btn">Ses Çıkart</button>
+    <button on:click={() => sendCommand(drone.id, "ping")} class="control-btn blue-bg" id="ping-btn">Ses Çal</button>
     <hr>
     <button on:click={() => sendCommand(drone.id, "rtl")} class="control-btn orange-bg" id="home-btn">Üsse Dön</button>
     <button on:click={() => sendCommand("broadcast", `fl,${drone.id}`)} class="control-btn orange-bg" id="home-btn">Formasyondan Çıkar ve Geri Ekle</button>
