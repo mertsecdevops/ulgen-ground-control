@@ -1,9 +1,10 @@
-import threading
+import platform
 import time
-import logging
-from queue import Queue, Full
-import functools
 import json
+import logging
+import threading
+import functools
+from queue import Queue, Full
 
 from digi.xbee.devices import XBeeDevice, RemoteXBeeDevice, XBee64BitAddress
 from digi.xbee.exception import XBeeException, TransmitException, TimeoutException, InvalidOperatingModeException
@@ -181,8 +182,17 @@ async def main():
     event_loop = asyncio.get_running_loop()
 
     # XBee başlat
-    xbee_instance = XBeeListener(port="/dev/ttyUSB0", baudrate=57600, message_received_callback=message_received_callback)
-    xbee_instance.listen()
+    port_prefix = "/dev/ttyUSB" if platform.system() == "Linux" else "COM"
+    logging.info(f"Portlar taranıyor...")
+    for port in range(6):
+        try:
+            xbee_instance = XBeeListener(port=f"{port_prefix}{port}", baudrate=57600, message_received_callback=message_received_callback)
+            xbee_instance.listen()
+            logging.info(f"XBee cihazı {port_prefix}{port} ile başlatıldı.")
+            break
+        except Exception as e:
+            logging.error(f"XBee cihazı {port_prefix}{port} açılamadı: {e}")
+            continue
 
     # WebSocket başlat
     await websockets.serve(ws_handler, "localhost", 8765)
