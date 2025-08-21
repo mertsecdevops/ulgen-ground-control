@@ -1,5 +1,8 @@
 # ÜLGEN - Ground Control Arayüzü
 
+<img width="1640" height="720" alt="Yeni Proje (1)" src="https://github.com/user-attachments/assets/e2502a40-086c-4354-8ba2-4eabb4133ad5" />
+
+
 ## Kodu Bilgisayarınıza Klonlama
 Arayüzü klonlamak için önce GitHub'daki organizasyona dahil olmanız gerekli, dahil olmak için bana yazın, kullanıcı adınıza davet atayım.
 
