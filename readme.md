@@ -1,21 +1,27 @@
 # ÜLGEN - Ground Control Arayüzü
 
-## Geliştirme Yapmak
-Kodu makinenize kopyaladıktan sonra
-```bash
-npm run dev
+## Kodu Bilgisayarınıza Klonlama
+Arayüzü klonlamak için önce GitHub'daki organizasyona dahil olmanız gerekli, dahil olmak için bana yazın, kullanıcı adınıza davet atayım.
 
-# veya sunucuyu başlat ve uygulamayı yeni bir tarayıcı sekmesinde aç
-npm run dev -- --open
-```
-Komutlarıyla çalıştırıp deneme yapabilirsiniz
-
-## Build Almak
-
-Build almak için
-
-```bash
-npm run build
-```
-
-Build'i önizlemek için: `npm run preview`.
+Eğer erişiminiz varsa, istediğiniz bir klasörde terminal açın ve,
+1.  Kodu klonlayın
+	```shell
+	git clone https://github.com/ULGEN-Suru-IHA-Takimi/ground-control.git
+	```
+2. Kodun klasörüne girin
+	```shell
+	cd ground-control
+	```
+3. Gereksinimleri kurun
+	```shell
+	npm install && pip install digi.xbee websockets
+	```
+4. Kodu çalıştırın
+	```shell
+	npm run dev
+	```
+	Bu satır arayüzü çalıştırır.
+	```shell
+	python xbee_handler/main.py
+	```
+	Burada ise XBee iletişimi çalışır ve aktif dronlar ekrana gelir.
